@@ -1,0 +1,8 @@
+{
+  "name": "dompetKu",
+  "description": "Premium personal finance dashboard with emerald green aesthetic, featuring transaction tracking, budgeting, and financial goals monitoring.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
