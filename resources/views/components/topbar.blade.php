@@ -53,14 +53,24 @@
                         </div>
                     @else
                         <a href="{{ route('notifications') }}" class="block p-3 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer border-b border-slate-50 flex items-start gap-3">
-                            <div class="p-2 rounded-xl {{ $latestNotif->data['percentage'] >= 100 ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600' }}">
-                                <x-lucide-alert-triangle class="w-4 h-4" />
+                            <div class="p-2 rounded-xl {{ isset($latestNotif->data['percentage']) && $latestNotif->data['percentage'] >= 100 ? 'bg-rose-100 text-rose-600' : 'bg-amber-100 text-amber-600' }}">
+                                @if(isset($latestNotif->data['due_date']))
+                                    <x-lucide-bell-ring class="w-4 h-4 text-amber-600" />
+                                @else
+                                    <x-lucide-alert-triangle class="w-4 h-4" />
+                                @endif
                             </div>
                             <div>
                                 <p class="text-xs font-bold text-slate-900 leading-tight">{{ $latestNotif->data['message'] }}</p>
-                                <p class="text-[10px] text-slate-500 mt-1">
-                                    Terpakai {{ $latestNotif->data['percentage'] }}% (Rp {{ number_format($latestNotif->data['usedAmount'], 0, ',', '.') }})
-                                </p>
+                                @if(isset($latestNotif->data['percentage']))
+                                    <p class="text-[10px] text-slate-500 mt-1">
+                                        Terpakai {{ $latestNotif->data['percentage'] }}% (Rp {{ number_format($latestNotif->data['usedAmount'], 0, ',', '.') }})
+                                    </p>
+                                @elseif(isset($latestNotif->data['due_date']))
+                                    <p class="text-[10px] text-slate-500 mt-1">
+                                        Nominal: Rp {{ number_format($latestNotif->data['amount'], 0, ',', '.') }}
+                                    </p>
+                                @endif
                                 <p class="text-[9px] text-slate-400 mt-1">{{ $latestNotif->created_at->diffForHumans() }}</p>
                             </div>
                         </a>
