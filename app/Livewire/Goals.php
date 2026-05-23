@@ -8,82 +8,125 @@ class Goals extends Component
 {
     public $showAddModal = false;
     public $showManageModal = false;
+    public $showDeleteConfirmModal = false;
+    public $deleteId;
     
-    // Add Goal
+    // Add/Edit Goal
+    public $goalId;
     public $goalName;
-    public $goalTarget;
-    public $goalEstimate;
-    public $goalMonthly;
-    public $goalColor = 'emerald';
+    public $goalTargetAmount;
+    public $goalEstimateDate;
+    public $goalMonthlyCapacity;
 
     // Manage Goal
     public $manageGoalId;
     public $depositAmount;
     public $depositWallet;
+    public $depositDate;
+    public $depositNotes;
 
     public function saveGoal()
     {
         $this->validate([
             'goalName' => 'required|string|max:255',
-            'goalTarget' => 'required|numeric',
-            'goalEstimate' => 'required|date',
-            'goalMonthly' => 'required|numeric',
-            'goalColor' => 'required|in:emerald,blue,amber,rose,purple',
+            'goalTargetAmount' => 'required|numeric',
+            'goalEstimateDate' => 'required|date',
+            'goalMonthlyCapacity' => 'required|numeric',
         ]);
 
-        auth()->user()->goals()->create([
-            'title' => $this->goalName,
-            'target_amount' => $this->goalTarget,
-            'estimate_date' => $this->goalEstimate,
-            'monthly_capacity' => $this->goalMonthly,
-            'color' => $this->goalColor,
-            'collected_amount' => 0,
-        ]);
+        if ($this->goalId) {
+            $goal = auth()->user()->goals()->findOrFail($this->goalId);
+            $goal->update([
+                'title' => $this->goalName,
+                'target_amount' => $this->goalTargetAmount,
+                'estimate_date' => $this->goalEstimateDate,
+                'monthly_capacity' => $this->goalMonthlyCapacity,
+            ]);
+        } else {
+            auth()->user()->goals()->create([
+                'title' => $this->goalName,
+                'target_amount' => $this->goalTargetAmount,
+                'estimate_date' => $this->goalEstimateDate,
+                'monthly_capacity' => $this->goalMonthlyCapacity,
+                'color' => 'emerald',
+                'collected_amount' => 0,
+            ]);
+        }
 
-        $this->reset(['goalName', 'goalTarget', 'goalEstimate', 'goalMonthly', 'goalColor', 'showAddModal']);
-        $this->goalColor = 'emerald';
+        $this->reset(['goalId', 'goalName', 'goalTargetAmount', 'goalEstimateDate', 'goalMonthlyCapacity', 'showAddModal']);
+    }
+
+    public function editGoal($id)
+    {
+        $goal = auth()->user()->goals()->findOrFail($id);
+        $this->goalId = $goal->id;
+        $this->goalName = $goal->title;
+        $this->goalTargetAmount = $goal->target_amount;
+        $this->goalEstimateDate = $goal->estimate_date;
+        $this->goalMonthlyCapacity = $goal->monthly_capacity;
+        $this->showAddModal = true;
+    }
+
+    public function confirmDelete($id)
+    {
+        $this->deleteId = $id;
+        $this->showDeleteConfirmModal = true;
+    }
+
+    public function deleteGoal()
+    {
+        if ($this->deleteId) {
+            auth()->user()->goals()->findOrFail($this->deleteId)->delete();
+        }
+        $this->showDeleteConfirmModal = false;
     }
 
     public function openManageModal($id)
     {
         $this->manageGoalId = $id;
+        $goal = auth()->user()->goals()->findOrFail($id);
+        $this->goalName = $goal->title; // For display
+        $this->depositAmount = null;
+        $this->depositWallet = '';
+        $this->depositDate = now()->format('Y-m-d');
+        $this->depositNotes = '';
         $this->showManageModal = true;
     }
 
     public function depositGoal()
     {
         $this->validate([
-            'depositAmount' => 'required|numeric',
-            'depositWallet' => 'nullable|exists:wallets,id',
+            'depositAmount' => 'required|numeric|min:1',
+            'depositWallet' => 'required|exists:wallets,id',
+            'depositDate' => 'required|date',
         ]);
 
         $goal = auth()->user()->goals()->findOrFail($this->manageGoalId);
         
-        if ($this->depositWallet) {
-            $wallet = auth()->user()->wallets()->find($this->depositWallet);
-            if ($wallet->balance < $this->depositAmount) {
-                $this->addError('depositAmount', 'Saldo dompet tidak mencukupi');
-                return;
-            }
-            
-            $wallet->balance -= $this->depositAmount;
-            $wallet->save();
-
-            // create an expense transaction
-            auth()->user()->transactions()->create([
-                'title' => 'Deposit ke Goal: ' . $goal->title,
-                'type' => 'expense',
-                'amount' => $this->depositAmount,
-                'wallet_id' => $this->depositWallet,
-                'category' => 'Tabungan',
-                'transaction_date' => now(),
-            ]);
+        $wallet = auth()->user()->wallets()->findOrFail($this->depositWallet);
+        if ($wallet->balance < $this->depositAmount) {
+            $this->addError('depositAmount', 'Saldo dompet tidak mencukupi');
+            return;
         }
+        
+        $wallet->balance -= $this->depositAmount;
+        $wallet->save();
+
+        // create an expense transaction
+        auth()->user()->transactions()->create([
+            'title' => 'Setoran Tabungan: ' . $goal->title,
+            'type' => 'expense',
+            'amount' => $this->depositAmount,
+            'wallet_id' => $this->depositWallet,
+            'category' => 'Lainnya',
+            'transaction_date' => $this->depositDate,
+            'notes' => $this->depositNotes,
+        ]);
 
         $goal->collected_amount += $this->depositAmount;
         $goal->save();
 
-        $this->reset(['depositAmount', 'depositWallet', 'manageGoalId', 'showManageModal']);
+        $this->reset(['depositAmount', 'depositWallet', 'depositDate', 'depositNotes', 'manageGoalId', 'showManageModal', 'goalName']);
     }
 
     public function render()

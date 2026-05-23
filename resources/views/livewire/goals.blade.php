@@ -24,142 +24,280 @@
             </div>
         </div>
     @else
-        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             @foreach($goals as $goal)
                 @php
                     $percent = $goal->target_amount > 0 ? min(($goal->collected_amount / $goal->target_amount) * 100, 100) : 0;
+                    // Color logic based on progress
+                    if ($percent >= 80) {
+                        $progressColor = 'bg-emerald-500';
+                        $progressBg = 'bg-emerald-50 text-emerald-600';
+                    } elseif ($percent >= 40) {
+                        $progressColor = 'bg-blue-500';
+                        $progressBg = 'bg-blue-50 text-blue-600';
+                    } else {
+                        $progressColor = 'bg-amber-500';
+                        $progressBg = 'bg-amber-50 text-amber-600';
+                    }
                 @endphp
-                <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col justify-between group hover:shadow-lg transition-all hover:-translate-y-1">
-                    <div class="space-y-6">
-                        <div class="flex items-center justify-between">
-                            <div class="w-14 h-14 rounded-[1.25rem] border flex items-center justify-center transition-colors 
-                                {{ $goal->color === 'emerald' ? 'bg-emerald-50 border-emerald-100 text-emerald-500 shadow-sm shadow-emerald-500/10' : ($goal->color === 'blue' ? 'bg-blue-50 border-blue-100 text-blue-500 shadow-sm shadow-blue-500/10' : ($goal->color === 'purple' ? 'bg-purple-50 border-purple-100 text-purple-500' : 'bg-amber-50 border-amber-100 text-amber-500 shadow-sm shadow-amber-500/10')) }}">
-                                <x-lucide-target class="w-7 h-7" stroke-width="2.5" />
-                            </div>
-                            <div class="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-tight 
-                                {{ $goal->color === 'emerald' ? 'bg-emerald-50 text-emerald-600' : ($goal->color === 'blue' ? 'bg-blue-50 text-blue-600' : ($goal->color === 'purple' ? 'bg-purple-50 text-purple-600' : 'bg-amber-50 text-amber-600')) }}">
-                                {{ round($percent) }}% Progress
-                            </div>
+                <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm space-y-6 relative group hover:shadow-lg transition-all">
+                    <div class="absolute top-4 right-4 flex gap-1 z-10">
+                        <button wire:click="editGoal({{ $goal->id }})" class="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-slate-50 rounded-lg transition-colors">
+                            <x-lucide-pencil class="w-4 h-4" />
+                        </button>
+                        <button wire:click="confirmDelete({{ $goal->id }})" class="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-slate-50 rounded-lg transition-colors">
+                            <x-lucide-trash-2 class="w-4 h-4" />
+                        </button>
+                    </div>
+                    
+                    <div class="flex justify-between items-center pt-2">
+                        <div class="w-12 h-12 rounded-full {{ $progressBg }} flex items-center justify-center">
+                            <x-lucide-target class="w-6 h-6" />
                         </div>
-
+                        <span class="px-3 py-1 rounded-full text-xs font-bold {{ $progressBg }}">
+                            {{ number_format($percent, 0) }}% PROGRESS
+                        </span>
+                    </div>
+                    
+                    <h3 class="font-bold text-lg text-navy-900 leading-tight pr-12">{{ $goal->title }}</h3>
+                    
+                    <div>
+                        <div class="flex justify-between items-end mb-2">
+                            <span class="text-xs font-bold text-slate-400 uppercase">Terkumpul</span>
+                            <span class="text-sm font-bold {{ str_replace('bg-', 'text-', $progressBg) }}">Rp {{ number_format($goal->collected_amount, 0, ',', '.') }}</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                            <div class="{{ $progressColor }} h-2.5 rounded-full transition-all duration-500" style="width: {{ $percent }}%"></div>
+                        </div>
+                        <div class="flex justify-between items-center mt-2">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Target</span>
+                            <span class="text-xs font-bold text-navy-900">Rp {{ number_format($goal->target_amount, 0, ',', '.') }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 border-t border-slate-100 pt-4">
                         <div>
-                            <h3 class="text-xl font-bold text-navy-900 tracking-tight leading-tight">{{ $goal->title }}</h3>
-                            <div class="mt-6 space-y-2">
-                                <div class="flex justify-between text-sm">
-                                    <span class="text-slate-400 font-medium">Terkumpul</span>
-                                    <span class="font-bold text-emerald-500">Rp {{ number_format($goal->collected_amount, 0, ',', '.') }}</span>
-                                </div>
-                                <div class="h-3 bg-slate-100 rounded-full overflow-hidden relative">
-                                    <div class="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-out {{ $goal->color === 'emerald' ? 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.3)]' : ($goal->color === 'blue' ? 'bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.3)]' : ($goal->color === 'purple' ? 'bg-purple-500' : 'bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.3)]')) }}" style="width: {{ $percent }}%"></div>
-                                </div>
-                                <div class="flex justify-between text-sm font-semibold">
-                                    <span class="text-slate-400 text-[10px] uppercase tracking-widest">Target</span>
-                                    <span class="text-navy-900">Rp {{ number_format($goal->target_amount, 0, ',', '.') }}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mt-10 pt-6 border-t border-slate-50 grid grid-cols-2 gap-4">
-                        <div class="space-y-1">
-                            <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Estimasi Selesai</p>
-                            <p class="font-bold text-navy-900 flex items-center gap-2 text-sm">
-                                <x-lucide-calendar class="w-3.5 h-3.5 text-emerald-500" /> {{ $goal->estimate_date ? \Carbon\Carbon::parse($goal->estimate_date)->format('M Y') : '-' }}
+                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Estimasi Selesai</p>
+                            <p class="text-xs font-bold text-navy-900 flex items-center gap-1 mt-1">
+                                <x-lucide-calendar class="w-3.5 h-3.5 text-emerald-500" />
+                                {{ \Carbon\Carbon::parse($goal->estimate_date)->translatedFormat('M Y') }}
                             </p>
                         </div>
-                        <div class="space-y-1 text-right">
-                            <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Kapasitas Bulanan</p>
-                            <p class="font-bold text-blue-600 flex items-center gap-2 text-sm justify-end">
-                                <x-lucide-trending-up class="w-3.5 h-3.5" /> Rp {{ number_format($goal->monthly_capacity, 0, ',', '.') }} / bln
+                        <div class="text-right">
+                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Kapasitas Bulanan</p>
+                            <p class="text-xs font-bold text-blue-600 flex items-center justify-end gap-1 mt-1">
+                                <x-lucide-trending-up class="w-3.5 h-3.5" />
+                                Rp {{ number_format($goal->monthly_capacity, 0, ',', '.') }} / bln
                             </p>
                         </div>
                     </div>
-
-                    <button wire:click="openManageModal({{ $goal->id }})" class="mt-8 w-full py-4 bg-slate-50 hover:bg-emerald-50 text-slate-600 hover:text-emerald-600 font-bold rounded-2xl transition-all flex items-center justify-center gap-2 group-hover:bg-emerald-50 group-hover:text-emerald-600">
-                        Kelola Tabungan <x-lucide-chevron-right class="w-[18px] h-[18px] group-hover:translate-x-1 transition-transform" />
+                    
+                    <button wire:click="openManageModal({{ $goal->id }})" class="w-full mt-2 py-3 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2">
+                        Kelola Tabungan <x-lucide-chevron-right class="w-4 h-4" />
                     </button>
                 </div>
             @endforeach
         </div>
     @endif
 
-    <!-- Add Goal Modal -->
-    @if($showAddModal)
-    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl relative">
-            <button wire:click="$set('showAddModal', false)" class="absolute top-6 right-6 p-2 text-slate-400 hover:bg-slate-100 rounded-xl transition-colors">
-                <x-lucide-x class="w-5 h-5" />
-            </button>
-            <h2 class="text-2xl font-bold text-slate-900 mb-6">Tambah Goal</h2>
-            <form wire:submit="saveGoal" class="space-y-4">
-                <div>
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1 mb-1">Judul Goal</label>
-                    <input type="text" wire:model="goalName" placeholder="Rumah KPR, Liburan..." class="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3 px-4 text-sm font-bold text-slate-900 focus:ring-4 focus:ring-emerald-500/10 outline-none" required />
-                </div>
-                <div>
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1 mb-1">Target Nominal (Rp)</label>
-                    <div x-data="{ raw: @entangle('goalTarget'), formatted: '' }" x-init="formatted = raw ? new Intl.NumberFormat('id-ID').format(raw) : ''; $watch('raw', val => { if(!val) formatted = ''; else if(val != String(formatted).replace(/\D/g, '')) formatted = new Intl.NumberFormat('id-ID').format(val); })">
-                        <input type="text" x-model="formatted" @input="let val = String(formatted).replace(/\D/g, ''); raw = val ? parseInt(val) : null; formatted = val ? new Intl.NumberFormat('id-ID').format(val) : '';" placeholder="0" class="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3 px-4 text-sm font-bold text-slate-900 focus:ring-4 focus:ring-emerald-500/10 outline-none" required />
-                    </div>
-                </div>
-                <div>
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1 mb-1">Kapasitas Nabung Bulanan (Rp)</label>
-                    <div x-data="{ raw: @entangle('goalMonthly'), formatted: '' }" x-init="formatted = raw ? new Intl.NumberFormat('id-ID').format(raw) : ''; $watch('raw', val => { if(!val) formatted = ''; else if(val != String(formatted).replace(/\D/g, '')) formatted = new Intl.NumberFormat('id-ID').format(val); })">
-                        <input type="text" x-model="formatted" @input="let val = String(formatted).replace(/\D/g, ''); raw = val ? parseInt(val) : null; formatted = val ? new Intl.NumberFormat('id-ID').format(val) : '';" placeholder="0" class="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3 px-4 text-sm font-bold text-slate-900 focus:ring-4 focus:ring-emerald-500/10 outline-none" required />
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1 mb-1">Warna Tema</label>
-                        <select wire:model="goalColor" class="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3 px-4 text-sm font-bold text-slate-900 focus:ring-4 focus:ring-emerald-500/10 outline-none">
-                            <option value="emerald">Emerald</option>
-                            <option value="blue">Blue</option>
-                            <option value="amber">Amber</option>
-                            <option value="rose">Rose</option>
-                            <option value="purple">Purple</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1 mb-1">Estimasi Capai</label>
-                        <input type="date" wire:model="goalEstimate" class="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3 px-4 text-sm font-bold text-slate-900 focus:ring-4 focus:ring-emerald-500/10 outline-none" required />
-                    </div>
-                </div>
-                <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-2xl font-black text-sm shadow-xl mt-6">
-                    Simpan Goal
+    <!-- Delete Confirm Modal -->
+    @if($showDeleteConfirmModal)
+    <div class="fixed inset-0 z-[120] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-navy-950/40 backdrop-blur-sm" wire:click="$set('showDeleteConfirmModal', false)"></div>
+        <div class="bg-white translate-z-0 w-full max-w-sm rounded-[2rem] shadow-2xl relative z-10 overflow-hidden flex flex-col items-center p-8 text-center animate-in zoom-in-95 duration-200">
+            <div class="w-16 h-16 bg-rose-50 rounded-[1.25rem] flex items-center justify-center mb-6">
+                <x-lucide-alert-triangle class="w-8 h-8 text-rose-500" />
+            </div>
+            <h2 class="text-xl font-bold text-navy-900 tracking-tight mb-2">Hapus Goal?</h2>
+            <p class="text-slate-500 text-sm leading-relaxed mb-8">
+                Apakah Anda yakin ingin menghapus goal ini? Tindakan ini tidak dapat dibatalkan.
+            </p>
+            <div class="flex items-center gap-3 w-full">
+                <button wire:click="$set('showDeleteConfirmModal', false)" class="flex-1 py-3.5 rounded-2xl text-xs font-bold text-slate-500 hover:bg-slate-50 transition-colors uppercase tracking-widest active:scale-95">
+                    Batal
                 </button>
+                <button wire:click="deleteGoal" class="flex-1 bg-rose-500 hover:bg-rose-600 text-white py-3.5 rounded-2xl font-black text-xs shadow-xl shadow-rose-500/20 active:scale-95 transition-all uppercase tracking-widest">
+                    Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- Add/Edit Goal Modal -->
+    @if($showAddModal)
+    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-navy-950/40 backdrop-blur-sm" wire:click="$set('showAddModal', false)"></div>
+        <div class="bg-white translate-z-0 w-full max-w-xl rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden flex flex-col">
+            <!-- Header -->
+            <div class="bg-emerald-500 px-6 py-5 text-white relative flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-white/20 rounded-xl backdrop-blur-md">
+                        <x-lucide-target class="w-[18px] h-[18px] stroke-[3px]" />
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold tracking-tight">{{ $goalId ? 'Edit Goals' : 'Tambah Goals' }}</h2>
+                        <p class="text-emerald-50 text-[10px] opacity-85">Rencanakan target tabungan barumu.</p>
+                    </div>
+                </div>
+                <button wire:click="$set('showAddModal', false)" class="p-1.5 bg-white/15 hover:bg-white/25 rounded-lg transition-colors">
+                    <x-lucide-x class="w-[18px] h-[18px]" />
+                </button>
+            </div>
+
+            <!-- Form Content -->
+            <form wire:submit="saveGoal" class="flex flex-col">
+                <div class="p-6 space-y-5 overflow-hidden">
+                    <!-- Nama Goals -->
+                    <div class="space-y-1.5">
+                        <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-1">Nama Goals*</label>
+                        <div class="relative group">
+                            <x-lucide-target class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors w-4 h-4" />
+                            <input type="text" wire:model="goalName" placeholder="Contoh: Laptop Baru, Liburan, dll" class="w-full bg-slate-50 border border-slate-100 rounded-2xl py-2.5 pl-10 pr-4 text-xs font-bold text-navy-900 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500/50 focus:bg-white outline-none transition-all" required />
+                        </div>
+                        @error('goalName') <span class="text-rose-500 text-[10px] ml-1">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Target Dana -->
+                        <div class="space-y-1.5">
+                            <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-1">Target Dana*</label>
+                            <div class="relative group">
+                                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 font-black text-slate-400 group-focus-within:text-emerald-500 text-xs">Rp</span>
+                                <div x-data="{ raw: @entangle('goalTargetAmount'), formatted: '' }" x-init="formatted = raw ? new Intl.NumberFormat('id-ID').format(raw) : ''; $watch('raw', val => { if(!val) formatted = ''; else if(val != String(formatted).replace(/\D/g, '')) formatted = new Intl.NumberFormat('id-ID').format(val); })">
+                                    <input type="text" x-model="formatted" @input="let val = String(formatted).replace(/\D/g, ''); raw = val ? parseInt(val) : null; formatted = val ? new Intl.NumberFormat('id-ID').format(val) : '';" placeholder="0" class="w-full bg-slate-50 border border-slate-100 rounded-2xl py-2.5 pl-[2.25rem] pr-4 text-xs font-bold text-navy-900 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500/50 focus:bg-white outline-none transition-all" required />
+                                </div>
+                            </div>
+                            @error('goalTargetAmount') <span class="text-rose-500 text-[10px] ml-1">{{ $message }}</span> @enderror
+                        </div>
+
+                        <!-- Kapasitas Bulanan -->
+                        <div class="space-y-1.5">
+                            <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-1">Kapasitas Bulanan*</label>
+                            <div class="relative group">
+                                <x-lucide-trending-up class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors w-4 h-4" />
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-[10px]">/ BLN</span>
+                                <div x-data="{ raw: @entangle('goalMonthlyCapacity'), formatted: '' }" x-init="formatted = raw ? new Intl.NumberFormat('id-ID').format(raw) : ''; $watch('raw', val => { if(!val) formatted = ''; else if(val != String(formatted).replace(/\D/g, '')) formatted = new Intl.NumberFormat('id-ID').format(val); })">
+                                    <input type="text" x-model="formatted" @input="let val = String(formatted).replace(/\D/g, ''); raw = val ? parseInt(val) : null; formatted = val ? new Intl.NumberFormat('id-ID').format(val) : '';" placeholder="0" class="w-full bg-slate-50 border border-slate-100 rounded-2xl py-2.5 pl-10 pr-12 text-xs font-bold text-navy-900 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500/50 focus:bg-white outline-none transition-all" required />
+                                </div>
+                            </div>
+                            @error('goalMonthlyCapacity') <span class="text-rose-500 text-[10px] ml-1">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+
+                    <!-- Estimasi Selesai -->
+                    <div class="space-y-1.5">
+                        <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-1">Estimasi Selesai*</label>
+                        <div class="relative group">
+                            <x-lucide-calendar class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors w-4 h-4" />
+                            <input type="date" wire:model="goalEstimateDate" class="w-full bg-slate-50 border border-slate-100 rounded-2xl py-2.5 pl-10 pr-4 text-xs font-bold text-navy-900 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500/50 focus:bg-white outline-none transition-all" required />
+                        </div>
+                        @error('goalEstimateDate') <span class="text-rose-500 text-[10px] ml-1">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="bg-emerald-50 p-4 rounded-2xl flex items-start gap-3 text-emerald-700">
+                        <div class="bg-white px-2 py-1 rounded text-xs font-bold text-emerald-600 mt-0.5">Tips</div>
+                        <p class="text-xs font-medium leading-relaxed">Kapasitas bulanan akan membantumu menabung teratur demi meraih impianmu tepat waktu.</p>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3 rounded-b-[2.5rem]">
+                    <button type="button" wire:click="$set('showAddModal', false)" class="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-200 transition-all uppercase tracking-widest active:scale-95">
+                        Batal
+                    </button>
+                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-7 py-2.5 rounded-xl font-black text-xs shadow-xl shadow-emerald-500/10 active:scale-95 transition-all flex items-center gap-2 uppercase tracking-widest">
+                        <x-lucide-check class="w-4 h-4 stroke-[3px]" /> Simpan Goals
+                    </button>
+                </div>
             </form>
         </div>
     </div>
     @endif
 
-    <!-- Manage Goal Modal (Deposit) -->
+    <!-- Manage Goal Savings Modal -->
     @if($showManageModal)
-    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl relative">
-            <button wire:click="$set('showManageModal', false)" class="absolute top-6 right-6 p-2 text-slate-400 hover:bg-slate-100 rounded-xl transition-colors">
-                <x-lucide-x class="w-5 h-5" />
-            </button>
-            <h2 class="text-2xl font-bold text-slate-900 mb-6">Setor ke Goal</h2>
-            <form wire:submit="depositGoal" class="space-y-4">
-                <div>
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1 mb-1">Nominal Setor (Rp)</label>
-                    <div x-data="{ raw: @entangle('depositAmount'), formatted: '' }" x-init="formatted = raw ? new Intl.NumberFormat('id-ID').format(raw) : ''; $watch('raw', val => { if(!val) formatted = ''; else if(val != String(formatted).replace(/\D/g, '')) formatted = new Intl.NumberFormat('id-ID').format(val); })">
-                        <input type="text" x-model="formatted" @input="let val = String(formatted).replace(/\D/g, ''); raw = val ? parseInt(val) : null; formatted = val ? new Intl.NumberFormat('id-ID').format(val) : '';" placeholder="0" class="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3 px-4 text-sm font-bold text-slate-900 focus:ring-4 focus:ring-emerald-500/10 outline-none" required />
+    <div class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-navy-950/40 backdrop-blur-sm" wire:click="$set('showManageModal', false)"></div>
+        <div class="bg-white translate-z-0 w-full max-w-xl rounded-[2.5rem] shadow-2xl relative z-10 overflow-hidden flex flex-col">
+            <!-- Header -->
+            <div class="bg-emerald-500 px-6 py-5 text-white relative flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-white/20 rounded-xl backdrop-blur-md">
+                        <x-lucide-plus class="w-[18px] h-[18px] stroke-[3px]" />
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold tracking-tight">Kelola Tabungan</h2>
+                        <p class="text-emerald-50 text-[10px] opacity-85">Tambah nominal setoran untuk goals {{ $goalName }}.</p>
                     </div>
                 </div>
-                <div>
-                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1 mb-1">Dari Wallet (Opsional)</label>
-                    <select wire:model="depositWallet" class="w-full bg-slate-50 border border-slate-100 rounded-2xl py-3 px-4 text-sm font-bold text-slate-900 focus:ring-4 focus:ring-emerald-500/10 outline-none">
-                        <option value="">Pilih Wallet</option>
-                        @foreach($wallets as $w)
-                            <option value="{{ $w->id }}">{{ $w->name }} (Rp {{ number_format($w->balance, 0, ',', '.') }})</option>
-                        @endforeach
-                    </select>
-                </div>
-                <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-2xl font-black text-sm shadow-xl mt-6">
-                    Setor Sekarang
+                <button wire:click="$set('showManageModal', false)" class="p-1.5 bg-white/15 hover:bg-white/25 rounded-lg transition-colors">
+                    <x-lucide-x class="w-[18px] h-[18px]" />
                 </button>
-                @error('depositAmount') <span class="text-xs font-bold text-rose-500 block text-center mt-2">{{ $message }}</span> @enderror
+            </div>
+
+            <!-- Form Content -->
+            <form wire:submit="depositGoal" class="flex flex-col">
+                <div class="p-6 space-y-5 overflow-hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Nominal Setoran -->
+                        <div class="space-y-1.5">
+                            <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-1">Nominal Setoran*</label>
+                            <div class="relative group">
+                                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 font-black text-slate-400 group-focus-within:text-emerald-500 text-xs">Rp</span>
+                                <div x-data="{ raw: @entangle('depositAmount'), formatted: '' }" x-init="formatted = raw ? new Intl.NumberFormat('id-ID').format(raw) : ''; $watch('raw', val => { if(!val) formatted = ''; else if(val != String(formatted).replace(/\D/g, '')) formatted = new Intl.NumberFormat('id-ID').format(val); })">
+                                    <input type="text" x-model="formatted" @input="let val = String(formatted).replace(/\D/g, ''); raw = val ? parseInt(val) : null; formatted = val ? new Intl.NumberFormat('id-ID').format(val) : '';" placeholder="0" class="w-full bg-slate-50 border border-slate-100 rounded-2xl py-2.5 pl-[2.25rem] pr-4 text-xs font-bold text-navy-900 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500/50 focus:bg-white outline-none transition-all" required />
+                                </div>
+                            </div>
+                            @error('depositAmount') <span class="text-rose-500 text-[10px] ml-1">{{ $message }}</span> @enderror
+                        </div>
+
+                        <!-- Dari Wallet -->
+                        <div class="space-y-1.5">
+                            <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-1">Dari Wallet*</label>
+                            <div class="relative group">
+                                <x-lucide-wallet class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors w-4 h-4" />
+                                <select wire:model="depositWallet" class="w-full bg-slate-50 border border-slate-100 rounded-2xl py-2.5 pl-10 pr-4 text-xs font-bold text-navy-900 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500/50 focus:bg-white outline-none transition-all appearance-none cursor-pointer" required>
+                                    <option value="">Pilih wallet</option>
+                                    @foreach($wallets as $wallet)
+                                        <option value="{{ $wallet->id }}">{{ $wallet->name }} (Rp {{ number_format($wallet->balance, 0, ',', '.') }})</option>
+                                    @endforeach
+                                </select>
+                                <x-lucide-chevron-down class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
+                            </div>
+                            @error('depositWallet') <span class="text-rose-500 text-[10px] ml-1">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+
+                    <!-- Tanggal -->
+                    <div class="space-y-1.5">
+                        <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-1">Tanggal*</label>
+                        <div class="relative group">
+                            <x-lucide-calendar class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors w-4 h-4" />
+                            <input type="date" wire:model="depositDate" class="w-full bg-slate-50 border border-slate-100 rounded-2xl py-2.5 pl-10 pr-4 text-xs font-bold text-navy-900 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500/50 focus:bg-white outline-none transition-all" required />
+                        </div>
+                        @error('depositDate') <span class="text-rose-500 text-[10px] ml-1">{{ $message }}</span> @enderror
+                    </div>
+
+                    <!-- Catatan -->
+                    <div class="space-y-1.5">
+                        <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-1">Catatan (Opsional)</label>
+                        <div class="relative group">
+                            <x-lucide-align-left class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors w-4 h-4" />
+                            <input type="text" wire:model="depositNotes" placeholder="Contoh: Setoran awal bulan" class="w-full bg-slate-50 border border-slate-100 rounded-2xl py-2.5 pl-10 pr-4 text-xs font-bold text-navy-900 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500/50 focus:bg-white outline-none transition-all" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3 rounded-b-[2.5rem]">
+                    <button type="button" wire:click="$set('showManageModal', false)" class="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-200 transition-all uppercase tracking-widest active:scale-95">
+                        Batal
+                    </button>
+                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-white px-7 py-2.5 rounded-xl font-black text-xs shadow-xl shadow-emerald-500/10 active:scale-95 transition-all flex items-center gap-2 uppercase tracking-widest">
+                        <x-lucide-check class="w-4 h-4 stroke-[3px]" /> Simpan Tabungan
+                    </button>
+                </div>
             </form>
         </div>
     </div>

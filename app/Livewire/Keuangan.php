@@ -58,11 +58,26 @@ class Keuangan extends Component
     public $budgetCategory = '';
     public $budgetPeriod = 'monthly';
     public $budgetLimit;
+    public $budgetNotify = false;
+    public $budgetNote;
+
+    // Goals
+    public $showAddGoalModal = false;
+    public $showManageGoalModal = false;
+    public $goalId;
+    public $goalName;
+    public $goalTargetAmount;
+    public $goalEstimateDate;
+    public $goalMonthlyCapacity;
+    
+    // Add savings to Goal
+    public $goalAddAmount;
+    public $goalAddWallet;
+    public $goalAddDate;
+    public $goalAddNotes;
 
     // Bills Filter
     public $filterBill = 'Semua';
-    public $budgetNotify = false;
-    public $budgetNote;
 
     // Transfer State
     public $showTransferModal = false;
@@ -465,6 +480,8 @@ class Keuangan extends Component
             $this->deleteBudget($this->deleteId);
         } elseif ($this->deleteType === 'bill') {
             $this->deleteBill($this->deleteId);
+        } elseif ($this->deleteType === 'goal') {
+            $this->deleteGoal($this->deleteId);
         }
         
         $this->showDeleteConfirmModal = false;
@@ -519,6 +536,11 @@ class Keuangan extends Component
     public function deleteBill($id)
     {
         auth()->user()->bills()->findOrFail($id)->delete();
+    }
+
+    public function deleteGoal($id)
+    {
+        auth()->user()->goals()->findOrFail($id)->delete();
     }
 
     public function editBill($id)
@@ -582,6 +604,98 @@ class Keuangan extends Component
         $this->checkAndSendReminder($bill);
 
         $this->reset(['editBillId', 'billName', 'billCategory', 'billWallet', 'billAmount', 'billDate', 'billReminder', 'billRepeat', 'showEditBillModal']);
+    }
+
+    // --- GOALS LOGIC ---
+    public function saveGoal()
+    {
+        $this->validate([
+            'goalName' => 'required|string|max:255',
+            'goalTargetAmount' => 'required|numeric|min:1',
+            'goalEstimateDate' => 'required|date',
+            'goalMonthlyCapacity' => 'required|numeric|min:0',
+        ]);
+
+        if ($this->goalId) {
+            $goal = auth()->user()->goals()->findOrFail($this->goalId);
+            $goal->update([
+                'title' => $this->goalName,
+                'target_amount' => $this->goalTargetAmount,
+                'estimate_date' => $this->goalEstimateDate,
+                'monthly_capacity' => $this->goalMonthlyCapacity,
+            ]);
+        } else {
+            auth()->user()->goals()->create([
+                'title' => $this->goalName,
+                'target_amount' => $this->goalTargetAmount,
+                'estimate_date' => $this->goalEstimateDate,
+                'monthly_capacity' => $this->goalMonthlyCapacity,
+                'color' => 'emerald',
+            ]);
+        }
+
+        $this->reset(['goalId', 'goalName', 'goalTargetAmount', 'goalEstimateDate', 'goalMonthlyCapacity', 'showAddGoalModal']);
+    }
+
+    public function editGoal($id)
+    {
+        $goal = auth()->user()->goals()->findOrFail($id);
+        $this->goalId = $goal->id;
+        $this->goalName = $goal->title;
+        $this->goalTargetAmount = $goal->target_amount;
+        $this->goalEstimateDate = $goal->estimate_date;
+        $this->goalMonthlyCapacity = $goal->monthly_capacity;
+        $this->showAddGoalModal = true;
+    }
+
+    public function manageGoal($id)
+    {
+        $goal = auth()->user()->goals()->findOrFail($id);
+        $this->goalId = $goal->id;
+        $this->goalName = $goal->title;
+        $this->goalAddAmount = null;
+        $this->goalAddWallet = '';
+        $this->goalAddDate = now()->format('Y-m-d');
+        $this->goalAddNotes = '';
+        $this->showManageGoalModal = true;
+    }
+
+    public function saveGoalSavings()
+    {
+        $this->validate([
+            'goalAddAmount' => 'required|numeric|min:1',
+            'goalAddWallet' => 'required|exists:wallets,id',
+            'goalAddDate' => 'required|date',
+        ]);
+
+        $wallet = \App\Models\Wallet::findOrFail($this->goalAddWallet);
+        if ($wallet->balance < $this->goalAddAmount) {
+            $this->addError('goalAddAmount', 'Saldo wallet tidak mencukupi.');
+            return;
+        }
+
+        $goal = auth()->user()->goals()->findOrFail($this->goalId);
+
+        // Record Transaction
+        auth()->user()->transactions()->create([
+            'title' => 'Setoran Tabungan: ' . $goal->title,
+            'type' => 'expense',
+            'amount' => $this->goalAddAmount,
+            'wallet_id' => $wallet->id,
+            'category' => 'Lainnya',
+            'transaction_date' => $this->goalAddDate,
+            'notes' => $this->goalAddNotes,
+        ]);
+
+        // Deduct from wallet
+        $wallet->balance -= $this->goalAddAmount;
+        $wallet->save();
+
+        // Add to goal
+        $goal->collected_amount += $this->goalAddAmount;
+        $goal->save();
+
+        $this->reset(['goalId', 'showManageGoalModal', 'goalAddAmount', 'goalAddWallet', 'goalAddDate', 'goalAddNotes']);
     }
 
     public function checkAndSendReminder($bill)
@@ -666,6 +780,7 @@ class Keuangan extends Component
             'transactions' => $txQuery->paginate(10),
             'budgets' => auth()->user()->budgets,
             'bills' => $bills,
+            'goals' => auth()->user()->goals()->latest()->get(),
         ]);
     }
 }
