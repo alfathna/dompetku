@@ -3,14 +3,7 @@
     class="h-20 bg-white/80 backdrop-blur-md border-b border-slate-100 flex items-center justify-between px-8 fixed top-0 right-0 left-0 z-30 transition-all duration-300"
 >
     <div class="flex-1 max-w-md hidden md:block">
-        <div class="relative group">
-            <x-lucide-search class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors w-4 h-4" />
-            <input 
-                type="text" 
-                placeholder="Cari transaksi, budget..." 
-                class="w-full bg-slate-100 border-none rounded-xl py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none"
-            />
-        </div>
+        <!-- Search removed as requested -->
     </div>
 
     <div class="flex items-center gap-4 ml-auto">

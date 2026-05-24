@@ -1,4 +1,9 @@
 <div class="space-y-8 pb-10">
+    <style>
+        @keyframes growBar {
+            from { width: 0%; }
+        }
+    </style>
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
             <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Financial Goals</h1>
@@ -67,7 +72,7 @@
                             <span class="text-sm font-bold {{ str_replace('bg-', 'text-', $progressBg) }}">Rp {{ number_format($goal->collected_amount, 0, ',', '.') }}</span>
                         </div>
                         <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                            <div class="{{ $progressColor }} h-2.5 rounded-full transition-all duration-500" style="width: {{ $percent }}%"></div>
+                            <div class="{{ $progressColor }} h-2.5 rounded-full" style="width: {{ $percent }}%; animation: growBar 1s ease-out;"></div>
                         </div>
                         <div class="flex justify-between items-center mt-2">
                             <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Target</span>

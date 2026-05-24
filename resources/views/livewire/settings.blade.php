@@ -1,4 +1,4 @@
-<div class="space-y-8 max-w-4xl mx-auto pb-12" x-data="{ 
+<div class="space-y-8 max-w-6xl mx-auto pb-12" x-data="{ 
     showDeleteModal: false, 
     deleteConfirmText: '', 
     isPermanentConfirmed: false 
@@ -12,9 +12,12 @@
     </div>
 
     <!-- Settings Sections -->
-    <div class="space-y-8 mt-8">
-        <!-- 1) Card — Profil Saya -->
-        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+        
+        <!-- Left Column: Profil -->
+        <div class="space-y-8">
+            <!-- 1) Card — Profil Saya -->
+            <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8 h-full">
             <div class="flex flex-col sm:flex-row items-center gap-8">
                 <div class="relative group">
                     <div class="w-24 h-24 bg-emerald-100 rounded-[2rem] flex items-center justify-center border-4 border-white shadow-xl shadow-emerald-500/10 overflow-hidden cursor-pointer">
@@ -38,7 +41,7 @@
             @endif
 
             <form wire:submit="saveProfile">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-4">
+                <div class="grid grid-cols-1 gap-8 pt-4">
                     <div class="space-y-2">
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">NAMA LENGKAP</label>
                         <input 
@@ -91,9 +94,12 @@
                 </div>
             </form>
         </div>
+        </div>
 
-        <!-- 2) Card — Ubah Password -->
-        <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6">
+        <!-- Right Column: Keamanan -->
+        <div class="space-y-8 flex flex-col">
+            <!-- 2) Card — Ubah Password -->
+            <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6 flex-1">
             <div class="flex items-center gap-3">
                 <div class="p-2 bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-500/20">
                     <x-lucide-lock class="w-5 h-5" />
@@ -109,35 +115,53 @@
             @endif
 
             <form wire:submit="updatePassword">
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                    <div class="space-y-2">
+                <div class="grid grid-cols-1 gap-6">
+                    <div class="space-y-2" x-data="{ show: false }">
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">PASSWORD SAAT INI</label>
-                        <input 
-                            type="password" 
-                            wire:model="current_password"
-                            placeholder="••••••••"
-                            class="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-4 text-sm font-bold text-navy-900 focus:ring-4 focus:ring-blue-500/10 outline-none hover:bg-slate-100 transition-all"
-                        />
+                        <div class="relative">
+                            <input 
+                                :type="show ? 'text' : 'password'" 
+                                wire:model="current_password"
+                                placeholder="••••••••"
+                                class="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-4 pr-12 text-sm font-bold text-navy-900 focus:ring-4 focus:ring-blue-500/10 outline-none hover:bg-slate-100 transition-all"
+                            />
+                            <button type="button" @click="show = !show" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" title="Tampilkan/Sembunyikan">
+                                <x-lucide-eye x-show="!show" class="w-5 h-5" />
+                                <x-lucide-eye-off x-show="show" class="w-5 h-5" style="display: none;" />
+                            </button>
+                        </div>
                         @error('current_password') <span class="text-xs font-bold text-rose-500 ml-1">{{ $message }}</span> @enderror
                     </div>
-                    <div class="space-y-2">
+                    <div class="space-y-2" x-data="{ show: false }">
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">PASSWORD BARU</label>
-                        <input 
-                            type="password" 
-                            wire:model="new_password"
-                            placeholder="Minimal 8 karakter"
-                            class="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-4 text-sm font-bold text-navy-900 focus:ring-4 focus:ring-blue-500/10 outline-none hover:bg-slate-100 transition-all"
-                        />
+                        <div class="relative">
+                            <input 
+                                :type="show ? 'text' : 'password'" 
+                                wire:model="new_password"
+                                placeholder="Minimal 8 karakter"
+                                class="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-4 pr-12 text-sm font-bold text-navy-900 focus:ring-4 focus:ring-blue-500/10 outline-none hover:bg-slate-100 transition-all"
+                            />
+                            <button type="button" @click="show = !show" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" title="Tampilkan/Sembunyikan">
+                                <x-lucide-eye x-show="!show" class="w-5 h-5" />
+                                <x-lucide-eye-off x-show="show" class="w-5 h-5" style="display: none;" />
+                            </button>
+                        </div>
                         @error('new_password') <span class="text-xs font-bold text-rose-500 ml-1">{{ $message }}</span> @enderror
                     </div>
-                    <div class="space-y-2">
+                    <div class="space-y-2" x-data="{ show: false }">
                         <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">KONFIRMASI PASSWORD</label>
-                        <input 
-                            type="password" 
-                            wire:model="new_password_confirmation"
-                            placeholder="Ulangi password baru"
-                            class="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-4 text-sm font-bold text-navy-900 focus:ring-4 focus:ring-blue-500/10 outline-none hover:bg-slate-100 transition-all"
-                        />
+                        <div class="relative">
+                            <input 
+                                :type="show ? 'text' : 'password'" 
+                                wire:model="new_password_confirmation"
+                                placeholder="Ulangi password baru"
+                                class="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-4 pr-12 text-sm font-bold text-navy-900 focus:ring-4 focus:ring-blue-500/10 outline-none hover:bg-slate-100 transition-all"
+                            />
+                            <button type="button" @click="show = !show" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" title="Tampilkan/Sembunyikan">
+                                <x-lucide-eye x-show="!show" class="w-5 h-5" />
+                                <x-lucide-eye-off x-show="show" class="w-5 h-5" style="display: none;" />
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="flex justify-end mt-6">
@@ -171,6 +195,7 @@
                     HAPUS SEMUA DATA & AKUN
                 </button>
             </div>
+        </div>
         </div>
     </div>
 

@@ -25,12 +25,21 @@ class Login extends Component
             'password' => 'required'
         ]);
 
-        if (\Illuminate\Support\Facades\Auth::attempt(['email' => $this->email, 'password' => $this->password])) {
-            session(['is_new_user' => false]);
-            return redirect()->route('dashboard');
+        $user = \App\Models\User::where('email', $this->email)->first();
+
+        if (!$user) {
+            $this->addError('email', 'Email tidak terdaftar.');
+            return;
         }
 
-        $this->addError('email', 'Kredensial tidak valid.');
+        if (!\Illuminate\Support\Facades\Hash::check($this->password, $user->password)) {
+            $this->addError('password', 'Password salah.');
+            return;
+        }
+
+        \Illuminate\Support\Facades\Auth::login($user);
+        session(['is_new_user' => false]);
+        return redirect()->route('dashboard');
     }
 
     public function register()

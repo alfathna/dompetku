@@ -30,30 +30,103 @@
     </div>
 
     <!-- TRANSAKSI TAB -->
-    <div x-show="activeTab === 'transaksi'" x-transition.opacity.duration.300ms style="display: none;">
+    <div x-show="activeTab === 'transaksi'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;">
         <div class="space-y-6">
             <div class="flex flex-wrap items-center justify-between gap-4">
-                <div class="flex flex-wrap items-center gap-3 flex-1">
-                    <div class="relative max-w-xs w-full sm:w-auto">
+                <div class="flex flex-wrap items-center gap-3 flex-1" x-data="{ showFilterModal: false }">
+                    <div class="relative max-w-[240px] w-full sm:w-auto">
                         <x-lucide-search class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-[18px] h-[18px]" />
                         <input type="text" wire:model.live="searchTx" placeholder="Cari transaksi..." class="w-full bg-white border border-slate-200 rounded-2xl py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all" />
                     </div>
-                    <div class="flex items-center gap-2 w-full sm:w-auto">
-                        <input type="date" wire:model.live="filterStartDate" class="flex-1 sm:flex-none bg-white border border-slate-200 rounded-2xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all" title="Tanggal Mulai">
-                        <span class="text-slate-400">-</span>
-                        <input type="date" wire:model.live="filterEndDate" class="flex-1 sm:flex-none bg-white border border-slate-200 rounded-2xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all" title="Tanggal Akhir">
+                    
+                    <!-- Filter Button -->
+                    <div class="flex items-center gap-2">
+                        <button @click="showFilterModal = true" class="p-2.5 rounded-2xl border transition-all flex items-center justify-center {{ ($filterStartDate || $filterEndDate || $sortNominal !== 'desc' || $filterType) ? 'bg-emerald-50 border-emerald-200 text-emerald-600 shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50' }}" title="Filter Transaksi">
+                            <x-lucide-filter class="w-[18px] h-[18px]" />
+                        </button>
+                        
+                        @if($filterStartDate || $filterEndDate || $sortNominal !== 'desc' || $filterType)
+                            <button wire:click="resetFilters" class="p-2.5 bg-white border border-slate-200 rounded-2xl text-rose-500 hover:bg-rose-50 hover:border-rose-200 transition-all flex items-center justify-center" title="Hapus Filter">
+                                <x-lucide-x class="w-[18px] h-[18px]" />
+                            </button>
+                        @endif
                     </div>
-                    <select wire:model.live="sortNominal" class="w-full sm:w-auto bg-white border border-slate-200 rounded-2xl py-2.5 px-4 text-sm focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all cursor-pointer">
-                        <option value="">Urutan Default</option>
-                        <option value="asc">Nominal Terendah</option>
-                        <option value="desc">Nominal Tertinggi</option>
-                    </select>
-                    <button wire:click="resetFilters" class="p-2.5 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all flex items-center justify-center" title="Reset Filter">
-                        <x-lucide-refresh-cw class="w-[18px] h-[18px]" />
-                    </button>
+
+                    <!-- Filter Modal -->
+                    <div x-show="showFilterModal" class="fixed inset-0 z-[60] flex items-center justify-center" style="display: none;">
+                        <div x-show="showFilterModal" x-transition.opacity class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" @click="showFilterModal = false"></div>
+                        
+                        <div x-show="showFilterModal" 
+                             x-transition:enter="transition ease-out duration-300"
+                             x-transition:enter-start="opacity-0 translate-y-8 sm:translate-y-0 sm:scale-95"
+                             x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                             x-transition:leave="transition ease-in duration-200"
+                             x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                             x-transition:leave-end="opacity-0 translate-y-8 sm:translate-y-0 sm:scale-95"
+                             class="relative bg-white rounded-t-[2rem] sm:rounded-[2rem] w-full max-w-md p-6 sm:p-8 shadow-2xl mt-auto sm:mt-0 max-h-[90vh] overflow-y-auto">
+                            
+                            <div class="flex items-center justify-between mb-6">
+                                <div>
+                                    <h3 class="text-xl font-black text-navy-900 tracking-tight">Filter Transaksi</h3>
+                                    <p class="text-xs font-bold text-slate-400 mt-1">Sesuaikan tampilan data transaksi</p>
+                                </div>
+                                <button @click="showFilterModal = false" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-colors">
+                                    <x-lucide-x class="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            <div class="space-y-6">
+                                <!-- Tanggal -->
+                                <div class="space-y-3">
+                                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Rentang Tanggal</label>
+                                    <div class="flex items-center gap-3">
+                                        <input type="date" wire:model.live="filterStartDate" class="flex-1 bg-slate-50 border border-slate-100 rounded-2xl py-3 px-4 text-xs font-bold text-navy-900 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all" title="Tanggal Mulai">
+                                        <span class="text-slate-400">-</span>
+                                        <input type="date" wire:model.live="filterEndDate" class="flex-1 bg-slate-50 border border-slate-100 rounded-2xl py-3 px-4 text-xs font-bold text-navy-900 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all" title="Tanggal Akhir">
+                                    </div>
+                                </div>
+
+                                <!-- Nominal -->
+                                <div class="space-y-3">
+                                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Urutkan Berdasarkan</label>
+                                    <div class="relative">
+                                        <select wire:model.live="sortNominal" class="w-full appearance-none bg-slate-50 border border-slate-100 rounded-2xl py-3 pl-4 pr-10 text-sm font-bold text-navy-900 focus:ring-4 focus:ring-emerald-500/10 outline-none cursor-pointer transition-all">
+                                            <option value="">Urutkan Terakhir</option>
+                                            <option value="desc">Nominal Tertinggi</option>
+                                            <option value="asc">Nominal Terendah</option>
+                                        </select>
+                                        <x-lucide-chevron-down class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
+                                    </div>
+                                </div>
+
+                                <!-- Tipe -->
+                                <div class="space-y-3">
+                                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block ml-1">Tipe Transaksi</label>
+                                    <div class="relative">
+                                        <select wire:model.live="filterType" class="w-full appearance-none bg-slate-50 border border-slate-100 rounded-2xl py-3 pl-4 pr-10 text-sm font-bold text-navy-900 focus:ring-4 focus:ring-emerald-500/10 outline-none cursor-pointer transition-all">
+                                            <option value="">Semua Tipe</option>
+                                            <option value="expense">Pengeluaran</option>
+                                            <option value="income">Pemasukan</option>
+                                            <option value="saving">Tabungan</option>
+                                        </select>
+                                        <x-lucide-chevron-down class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-8 pt-6 border-t border-slate-100 flex gap-3">
+                                <button wire:click="resetFilters" @click="showFilterModal = false" class="flex-1 px-4 py-3 bg-slate-50 text-slate-600 rounded-2xl text-sm font-bold hover:bg-slate-100 transition-all">
+                                    Reset
+                                </button>
+                                <button @click="showFilterModal = false" class="flex-1 px-4 py-3 bg-emerald-500 text-white rounded-2xl text-sm font-bold shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all">
+                                    Terapkan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="flex items-center gap-3 w-full xl:w-auto justify-end">
-                    <button class="flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all flex-1 xl:flex-none">
+                    <button class="flex items-center justify-center gap-2 px-6 py-2.5 bg-white border border-slate-200 rounded-2xl text-slate-600 text-sm font-bold shadow-sm hover:bg-slate-50 transition-all">
                         <x-lucide-download class="w-[18px] h-[18px]" /> Export
                     </button>
                     <button wire:click="$set('showAddModal', true)" class="flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-500 text-white rounded-2xl text-sm font-bold shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all flex-1 xl:flex-none whitespace-nowrap">
@@ -96,14 +169,16 @@
                                         <td class="px-6 py-5 text-center">
                                             <div class="flex justify-center">
                                                 @if($item->type === 'income')
-                                                    <div class="bg-emerald-50 text-emerald-600 p-1 rounded-lg"><x-lucide-arrow-up class="w-3.5 h-3.5" /></div>
+                                                    <div class="bg-emerald-50 text-emerald-600 p-1 rounded-lg" title="Pemasukan"><x-lucide-arrow-up class="w-3.5 h-3.5" /></div>
+                                                @elseif($item->type === 'saving')
+                                                    <div class="bg-blue-50 text-blue-600 p-1 rounded-lg" title="Tabungan"><x-lucide-target class="w-3.5 h-3.5" /></div>
                                                 @else
-                                                    <div class="bg-rose-50 text-rose-600 p-1 rounded-lg"><x-lucide-arrow-down class="w-3.5 h-3.5" /></div>
+                                                    <div class="bg-rose-50 text-rose-600 p-1 rounded-lg" title="Pengeluaran"><x-lucide-arrow-down class="w-3.5 h-3.5" /></div>
                                                 @endif
                                             </div>
                                         </td>
                                         <td class="px-6 py-5 text-sm text-slate-500">{{ \Carbon\Carbon::parse($item->transaction_date)->format('d M Y') }}</td>
-                                        <td class="px-6 py-5 font-bold tabular-nums {{ $item->type === 'income' ? 'text-emerald-500' : 'text-rose-500' }}">
+                                        <td class="px-6 py-5 font-bold tabular-nums {{ $item->type === 'income' ? 'text-emerald-500' : ($item->type === 'saving' ? 'text-blue-500' : 'text-rose-500') }}">
                                             {{ $item->type === 'income' ? '+' : '-' }}Rp {{ number_format($item->amount, 0, ',', '.') }}
                                         </td>
                                         <td class="px-8 py-5 text-right">
@@ -127,7 +202,7 @@
     </div>
 
     <!-- WALLET TAB -->
-    <div x-show="activeTab === 'wallet'" x-transition.opacity.duration.300ms style="display: none;">
+    <div x-show="activeTab === 'wallet'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;">
         <div class="space-y-6">
             <div class="flex justify-end gap-3">
                 <button wire:click="$set('showTransferModal', true)" class="flex items-center gap-2 px-6 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-2xl text-sm font-bold shadow-sm hover:bg-slate-50 transition-all">
@@ -192,7 +267,7 @@
     </div>
 
     <!-- BUDGET TAB -->
-    <div x-show="activeTab === 'budget'" x-transition.opacity.duration.300ms style="display: none;">
+    <div x-show="activeTab === 'budget'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;">
         <div class="space-y-6">
             <div class="flex justify-end">
                 <button wire:click="$set('showAddBudgetModal', true)" class="flex items-center gap-2 px-6 py-2.5 bg-emerald-500 text-white rounded-2xl text-sm font-bold shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all">
@@ -277,8 +352,8 @@
                                         {{ round($percent) }}% TERPAKAI
                                     </span>
                                 </div>
-                                <div class="h-3 bg-slate-100 rounded-full overflow-hidden">
-                                    <div class="h-full rounded-full {{ $barClass }}" style="width: {{ $percent }}%"></div>
+                                <div class="h-2 bg-slate-100 rounded-full overflow-hidden" x-data="{ showBar: activeTab === 'budget' }" x-init="$watch('activeTab', val => { if(val === 'budget') { setTimeout(() => showBar = true, 50) } else { showBar = false } })">
+                                    <div class="h-full rounded-full transition-all duration-1000 ease-out {{ $barClass }}" :style="'width: ' + (showBar ? {{ $percent }} : 0) + '%'"></div>
                                 </div>
                             </div>
 
@@ -301,7 +376,7 @@
     </div>
 
     <!-- TAGIHAN TAB -->
-    <div x-show="activeTab === 'tagihan'" x-transition.opacity.duration.300ms style="display: none;">
+    <div x-show="activeTab === 'tagihan'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;">
         <div class="space-y-6">
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div class="flex items-center gap-2 bg-slate-50 p-1 rounded-xl">
@@ -363,12 +438,17 @@
                         </div>
                     @endforeach
                 </div>
+                @if($bills->hasPages())
+                <div class="px-6 py-4 mt-6 border-t border-slate-100 bg-slate-50/30 rounded-2xl">
+                    {{ $bills->links(data: ['scrollTo' => false]) }}
+                </div>
+                @endif
             @endif
         </div>
     </div>
 
     <!-- GOALS TAB -->
-    <div x-show="activeTab === 'goals'" x-transition.opacity.duration.300ms style="display: none;">
+    <div x-show="activeTab === 'goals'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;">
         <div class="space-y-6">
             <div class="flex justify-end">
                 <button wire:click="$set('showAddGoalModal', true)" class="flex items-center gap-2 px-6 py-2.5 bg-emerald-500 text-white rounded-2xl text-sm font-bold shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all">
@@ -427,8 +507,8 @@
                                     <span class="text-xs font-bold text-slate-400 uppercase">Terkumpul</span>
                                     <span class="text-sm font-bold {{ str_replace('bg-', 'text-', $progressBg) }}">Rp {{ number_format($goal->collected_amount, 0, ',', '.') }}</span>
                                 </div>
-                                <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                                    <div class="{{ $progressColor }} h-2.5 rounded-full transition-all duration-500" style="width: {{ $percent }}%"></div>
+                                <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden" x-data="{ showBar: activeTab === 'goals' }" x-init="$watch('activeTab', val => { if(val === 'goals') { setTimeout(() => showBar = true, 50) } else { showBar = false } })">
+                                    <div class="{{ $progressColor }} h-2.5 rounded-full transition-all duration-1000 ease-out" :style="'width: ' + (showBar ? {{ $percent }} : 0) + '%'"></div>
                                 </div>
                                 <div class="flex justify-between items-center mt-2">
                                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Target</span>

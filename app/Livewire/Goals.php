@@ -115,10 +115,10 @@ class Goals extends Component
         // create an expense transaction
         auth()->user()->transactions()->create([
             'title' => 'Setoran Tabungan: ' . $goal->title,
-            'type' => 'expense',
+            'type' => 'saving',
             'amount' => $this->depositAmount,
             'wallet_id' => $this->depositWallet,
-            'category' => 'Lainnya',
+            'category' => 'Tabungan',
             'transaction_date' => $this->depositDate,
             'notes' => $this->depositNotes,
         ]);

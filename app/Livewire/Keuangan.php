@@ -15,16 +15,18 @@ class Keuangan extends Component
     public $searchTx = '';
     public $filterStartDate = '';
     public $filterEndDate = '';
-    public $sortNominal = '';
+    public $sortNominal = 'desc';
+    public $filterType = '';
 
     public function updatingSearchTx() { $this->resetPage(); }
     public function updatingFilterStartDate() { $this->resetPage(); }
     public function updatingFilterEndDate() { $this->resetPage(); }
     public function updatingSortNominal() { $this->resetPage(); }
+    public function updatingFilterType() { $this->resetPage(); }
 
     public function resetFilters()
     {
-        $this->reset(['searchTx', 'filterStartDate', 'filterEndDate', 'sortNominal']);
+        $this->reset(['searchTx', 'filterStartDate', 'filterEndDate', 'sortNominal', 'filterType']);
         $this->resetPage();
     }
 
@@ -759,6 +761,10 @@ class Keuangan extends Component
             $txQuery->whereDate('transaction_date', '<=', $this->filterEndDate);
         }
 
+        if ($this->filterType) {
+            $txQuery->where('type', $this->filterType);
+        }
+
         if ($this->sortNominal === 'asc') {
             $txQuery->orderBy('amount', 'asc');
         } elseif ($this->sortNominal === 'desc') {
@@ -773,7 +779,7 @@ class Keuangan extends Component
         } elseif ($this->filterBill === 'Sudah Dibayar') {
             $billQuery->where('status', 'Paid');
         }
-        $bills = $billQuery->orderByRaw("CASE WHEN status = 'Paid' THEN 1 ELSE 0 END")->latest()->get();
+        $bills = $billQuery->orderByRaw("CASE WHEN status = 'Paid' THEN 1 ELSE 0 END")->latest()->paginate(9, ['*'], 'billPage');
 
         return view('livewire.keuangan', [
             'wallets' => auth()->user()->wallets,

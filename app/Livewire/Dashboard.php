@@ -22,7 +22,7 @@ class Dashboard extends Component
         
         $recentTransactions = $user->transactions()
             ->latest('transaction_date')
-            ->take(4)
+            ->take(5)
             ->get();
             
         $activeGoals = $user->goals()->take(2)->get();
