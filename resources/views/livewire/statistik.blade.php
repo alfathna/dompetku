@@ -93,49 +93,51 @@
         <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col">
             <h3 class="text-xl font-bold text-navy-900 mb-6">Kategori Pengeluaran</h3>
 
-            <div class="h-[200px] w-full flex items-center justify-center relative mb-8" x-data="donutChartData()" x-init="initChart()">
-                <canvas id="donutChart"></canvas>
-                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2">
-                    <span class="text-2xl font-black text-navy-900">
-                        @php
-                            $biggestPercent = 0;
-                            if(count($categoryData) > 0 && $expenseThisMonth > 0) {
-                                $biggestPercent = round(($categoryData[0]->value / $expenseThisMonth) * 100);
-                            }
-                        @endphp
-                        {{ $isNewUser ? '0%' : $biggestPercent . '%' }}
-                    </span>
-                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Terbesar</span>
-                </div>
-            </div>
-
-            <div class="space-y-2 flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                @php
-                    $colors = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'];
-                    if (count($categoryData) === 0) {
-                        $catList = [['name' => 'Belum Ada Data', 'value' => 0, 'color' => '#cbd5e1']];
-                    } else {
-                        $catList = [];
-                        foreach($categoryData as $idx => $cat) {
-                            $catList[] = [
-                                'name' => $cat->name,
-                                'value' => $cat->value,
-                                'color' => $colors[$idx % count($colors)]
-                            ];
-                        }
-                    }
-                @endphp
-                @foreach($catList as $item)
-                    <div class="flex items-center justify-between p-3.5 bg-slate-50/50 rounded-2xl hover:bg-slate-50 transition-colors group">
-                        <div class="flex items-center gap-3">
-                            <div class="w-2.5 h-2.5 rounded-full" style="background-color: {{ $item['color'] }}"></div>
-                            <span class="text-sm font-bold text-slate-600 group-hover:text-navy-900 transition-colors">{{ $item['name'] }}</span>
-                        </div>
-                        <span class="text-sm font-black text-navy-900 tabular-nums">
-                            Rp {{ number_format($item['value'], 0, ',', '.') }}
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+                <div class="h-[250px] w-full flex items-center justify-center relative lg:col-span-1" x-data="donutChartData()" x-init="initChart()">
+                    <canvas id="donutChart"></canvas>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2">
+                        <span class="text-2xl font-black text-navy-900">
+                            @php
+                                $biggestPercent = 0;
+                                if(count($categoryData) > 0 && $expenseThisMonth > 0) {
+                                    $biggestPercent = round(($categoryData[0]->value / $expenseThisMonth) * 100);
+                                }
+                            @endphp
+                            {{ $isNewUser ? '0%' : $biggestPercent . '%' }}
                         </span>
+                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Terbesar</span>
                     </div>
-                @endforeach
+                </div>
+
+                <div class="w-full lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    @php
+                        $colors = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'];
+                        if (count($categoryData) === 0) {
+                            $catList = [['name' => 'Belum Ada Data', 'value' => 0, 'color' => '#cbd5e1']];
+                        } else {
+                            $catList = [];
+                            foreach($categoryData as $idx => $cat) {
+                                $catList[] = [
+                                    'name' => $cat->name,
+                                    'value' => $cat->value,
+                                    'color' => $colors[$idx % count($colors)]
+                                ];
+                            }
+                        }
+                    @endphp
+                    @foreach($catList as $item)
+                        <div class="flex items-center justify-between p-3.5 bg-slate-50/50 rounded-2xl hover:bg-slate-50 transition-colors group">
+                            <div class="flex items-center gap-3">
+                                <div class="w-2.5 h-2.5 rounded-full" style="background-color: {{ $item['color'] }}"></div>
+                                <span class="text-sm font-bold text-slate-600 group-hover:text-navy-900 transition-colors">{{ $item['name'] }}</span>
+                            </div>
+                            <span class="text-sm font-black text-navy-900 tabular-nums">
+                                Rp {{ number_format($item['value'], 0, ',', '.') }}
+                            </span>
+                        </div>
+                    @endforeach
+                </div>
             </div>
         </div>
 
