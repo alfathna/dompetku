@@ -12,6 +12,14 @@
 
 Awalnya dibangun dengan React, proyek ini telah sepenuhnya dimigrasikan menggunakan teknologi **TALL Stack** untuk memberikan pengalaman *full-stack* yang cepat, responsif, dan *developer-friendly*.
 
+## ✨ Fitur Utama
+
+- **Pencatatan Transaksi**: Catat setiap pemasukan dan pengeluaran dengan detail.
+- **Manajemen Dompet**: Kelola saldo dari berbagai sumber (Bank, E-Wallet, Tunai).
+- **Pengingat Tagihan**: Jangan pernah lewatkan tagihan bulanan Anda.
+- **Limit Anggaran**: Atur batas pengeluaran agar keuangan lebih terkontrol.
+- **Laporan Berkala**: Pantau statistik dan ringkasan keuangan secara harian atau bulanan.
+
 ## 🚀 Tech Stack
 
 Proyek ini dibangun menggunakan **TALL Stack**:
@@ -82,7 +90,6 @@ Ikuti langkah-langkah di bawah ini untuk menjalankan proyek ini di mesin lokal A
    Aplikasi Anda kini dapat diakses di `http://localhost:8000` (Atau bisa langsung diakses melalui `http://dompetku.test` jika menggunakan **Laragon**).
 
 ## 🗂️ Struktur Direktori Penting
-- `legacy-react/`: Folder yang berisi *source code* React/Vite versi lama sebelum migrasi.
 - `app/Livewire/`: Lokasi *Class* komponen Livewire (Controller).
 - `resources/views/livewire/`: Lokasi *Blade view* untuk komponen Livewire.
 - `resources/views/components/`: Lokasi komponen Blade *stateless* (seperti `<x-sidebar>` dan `<x-topbar>`).
