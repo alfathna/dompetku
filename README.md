@@ -10,7 +10,7 @@
 
 **DompetKu** adalah aplikasi web modern yang dirancang untuk membantu Anda melacak, mengelola, dan merencanakan keuangan pribadi dengan lebih bijak. Dari pencatatan transaksi masuk dan keluar, manajemen limit anggaran (budget), pengelolaan berbagai jenis dompet, hingga pengingat tagihan bulanan.
 
-Awalnya dibangun dengan React, proyek ini telah sepenuhnya dimigrasikan menggunakan teknologi **TALL Stack** untuk memberikan pengalaman *full-stack* yang cepat, responsif, dan *developer-friendly*.
+Proyek ini menggunakan teknologi **TALL Stack** untuk memberikan pengalaman *full-stack* yang cepat, responsif, dan *developer-friendly*.
 
 ## ✨ Fitur Utama
 
