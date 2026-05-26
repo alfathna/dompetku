@@ -3,9 +3,13 @@
 namespace App\Livewire;
 
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Settings extends Component
 {
+    use WithFileUploads;
+
+    public $photo;
     public $name = '';
     public $email = '';
     public $job = '';
@@ -20,8 +24,24 @@ class Settings extends Component
         $user = auth()->user();
         $this->name = $user->name;
         $this->email = $user->email;
-        $this->job = 'Senior UI/UX Designer & Freelancer'; // keep dummy for non-db fields
-        $this->timezone = $user->timezone ?? '';
+        $this->job = ''; // default empty
+        $tz = $user->timezone ?? '';
+        
+        $map = [
+            'WIB' => 'Asia/Jakarta',
+            'WITA' => 'Asia/Makassar',
+            'WIT' => 'Asia/Jayapura',
+            'GMT+07:00 (Jakarta)' => 'Asia/Jakarta',
+            'GMT+08:00 (Makassar)' => 'Asia/Makassar',
+            'GMT+09:00 (Jayapura)' => 'Asia/Jayapura',
+            'GMT+00:00 (London)' => 'UTC',
+        ];
+        
+        if (isset($map[$tz])) {
+            $tz = $map[$tz];
+        }
+        
+        $this->timezone = $tz;
     }
 
     public function saveProfile()
@@ -29,16 +49,44 @@ class Settings extends Component
         $this->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email,' . auth()->id(),
-            'timezone' => 'nullable|string'
+            'timezone' => 'nullable|string',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // 2MB Max
+        ], [
+            'photo.image' => 'File harus berupa gambar.',
+            'photo.mimes' => 'Format gambar harus berupa jpeg, png, atau jpg.',
+            'photo.max' => 'Ukuran gambar maksimal adalah 2MB.',
         ]);
 
         $user = auth()->user();
+        
+        if ($this->photo) {
+            // Delete old photo if exists
+            if ($user->profile_photo_path) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($user->profile_photo_path);
+            }
+            $path = $this->photo->store('profile-photos', 'public');
+            $user->profile_photo_path = $path;
+        }
+
         $user->name = $this->name;
         $user->email = $this->email;
         $user->timezone = $this->timezone;
         $user->save();
 
         session()->flash('profile_success', 'Profil berhasil diperbarui!');
+    }
+
+    public function deletePhoto()
+    {
+        $user = auth()->user();
+        if ($user->profile_photo_path) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($user->profile_photo_path);
+            $user->profile_photo_path = null;
+            $user->save();
+            $this->photo = null;
+        }
+
+        session()->flash('profile_success', 'Foto profil berhasil dihapus!');
     }
 
     public function updatePassword()

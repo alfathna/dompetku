@@ -1,7 +1,76 @@
 <div class="space-y-8 max-w-6xl mx-auto pb-12" x-data="{ 
     showDeleteModal: false, 
     deleteConfirmText: '', 
-    isPermanentConfirmed: false 
+    isPermanentConfirmed: false,
+    
+    // Cropper State
+    showCropper: false,
+    cropper: null,
+    isUploading: false,
+    
+    fileChosen(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        if (file.size > 2 * 1024 * 1024) {
+            alert('Ukuran gambar maksimal adalah 2MB.');
+            event.target.value = '';
+            return;
+        }
+        
+        if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
+            alert('Format gambar harus berupa jpeg, png, atau jpg.');
+            event.target.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const imageElement = document.getElementById('cropper-image');
+            imageElement.src = e.target.result;
+            
+            this.showCropper = true;
+            
+            if (this.cropper) {
+                this.cropper.destroy();
+            }
+            
+            setTimeout(() => {
+                this.cropper = new Cropper(imageElement, {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                    autoCropArea: 1,
+                });
+            }, 100);
+        };
+        reader.readAsDataURL(file);
+    },
+    
+    cropImage() {
+        if (!this.cropper) return;
+        this.isUploading = true;
+        
+        this.cropper.getCroppedCanvas({
+            width: 400,
+            height: 400,
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high',
+        }).toBlob((blob) => {
+            const file = new File([blob], 'profile.jpg', { type: 'image/jpeg' });
+            @this.upload('photo', file, (uploadedFilename) => {
+                this.showCropper = false;
+                this.cropper.destroy();
+                this.cropper = null;
+                this.isUploading = false;
+                document.getElementById('photo').value = '';
+            }, () => {
+                alert('Gagal mengunggah gambar');
+                this.isUploading = false;
+            }, (event) => {
+                // progress
+            });
+        }, 'image/jpeg', 0.9);
+    }
 }">
     <!-- Header Content -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 px-1">
@@ -20,16 +89,30 @@
             <div class="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8 h-full">
             <div class="flex flex-col sm:flex-row items-center gap-8">
                 <div class="relative group">
-                    <div class="w-24 h-24 bg-emerald-100 rounded-[2rem] flex items-center justify-center border-4 border-white shadow-xl shadow-emerald-500/10 overflow-hidden cursor-pointer">
-                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed={{ auth()->user()->name }}" alt="Profile" />
+                    <label for="photo" class="w-24 h-24 bg-emerald-100 rounded-[2rem] flex items-center justify-center border-4 border-white shadow-xl shadow-emerald-500/10 overflow-hidden cursor-pointer relative group">
+                        @if ($photo)
+                            <img src="{{ $photo->temporaryUrl() }}" alt="Profile" class="w-full h-full object-cover" />
+                        @else
+                            <img src="{{ auth()->user()->profile_photo_url }}" alt="Profile" class="w-full h-full object-cover" />
+                        @endif
                         <div class="absolute inset-0 bg-navy-900/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                             <span class="text-[10px] font-bold text-white uppercase tracking-widest">Ubah Foto</span>
                         </div>
-                    </div>
+                    </label>
+                    <input type="file" id="photo" class="hidden" accept="image/png, image/jpeg, image/jpg" @change="fileChosen">
+                    
+                    <div x-show="isUploading" class="text-xs text-emerald-500 font-bold mt-2 text-center absolute -bottom-6 w-full" style="display: none;">Uploading...</div>
+                    <div wire:loading wire:target="photo" class="text-xs text-emerald-500 font-bold mt-2 text-center absolute -bottom-6 w-full">Uploading...</div>
                 </div>
                 <div class="text-center sm:text-left">
                     <h3 class="text-xl font-bold text-navy-900">{{ auth()->user()->name }}</h3>
                     <p class="text-slate-400 text-sm">Update foto profil dan identitas pribadimu.</p>
+                    @error('photo') <span class="text-xs font-bold text-rose-500 mt-1 block">{{ $message }}</span> @enderror
+                    @if(auth()->user()->profile_photo_path)
+                    <button type="button" wire:click="deletePhoto" class="mt-3 text-xs font-bold text-rose-500 hover:text-rose-600 transition-colors uppercase tracking-widest flex items-center gap-1 mx-auto sm:mx-0">
+                        <x-lucide-trash-2 class="w-4 h-4" /> Hapus Foto
+                    </button>
+                    @endif
                 </div>
             </div>
 
@@ -67,7 +150,7 @@
                         <input 
                             type="text" 
                             wire:model="job"
-                            placeholder="Masukkan pekerjaan"
+                            placeholder="Contoh: UI/UX Designer, Freelancer..."
                             class="w-full bg-slate-50 border border-slate-100 rounded-2xl py-4 px-4 text-sm font-bold text-navy-900 focus:ring-4 focus:ring-emerald-500/10 outline-none hover:bg-slate-100 transition-all"
                         />
                     </div>
@@ -77,10 +160,9 @@
                             <x-lucide-globe class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-[18px] h-[18px]" />
                             <select wire:model="timezone" class="w-full appearance-none bg-slate-50 border border-slate-100 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold text-navy-900 focus:ring-4 focus:ring-emerald-500/10 outline-none hover:bg-slate-100 transition-all cursor-pointer">
                                 <option value="">Pilih zona waktu</option>
-                                <option value="GMT+07:00 (Jakarta)">GMT+07:00 (Jakarta)</option>
-                                <option value="GMT+08:00 (Makassar)">GMT+08:00 (Makassar)</option>
-                                <option value="GMT+09:00 (Jayapura)">GMT+09:00 (Jayapura)</option>
-                                <option value="GMT+00:00 (London)">GMT+00:00 (London)</option>
+                                <option value="Asia/Jakarta">WIB (Waktu Indonesia Barat)</option>
+                                <option value="Asia/Makassar">WITA (Waktu Indonesia Tengah)</option>
+                                <option value="Asia/Jayapura">WIT (Waktu Indonesia Timur)</option>
                             </select>
                             <x-lucide-chevron-down class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none w-3.5 h-3.5" />
                         </div>
@@ -277,6 +359,62 @@
                         class="flex-[1.5] bg-rose-500 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-rose-600 text-white px-4 py-4 rounded-2xl font-black text-sm shadow-xl shadow-rose-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 uppercase tracking-widest"
                     >
                         Hapus Permanen
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cropper Modal -->
+    <div x-show="showCropper" style="display: none;">
+        <div 
+            x-show="showCropper" 
+            x-transition.opacity.duration.300ms
+            class="fixed inset-0 bg-navy-950/80 backdrop-blur-sm z-[100]"
+        ></div>
+
+        <div class="fixed inset-0 flex items-center justify-center z-[101] p-4 pointer-events-none">
+            <div 
+                x-show="showCropper" 
+                x-transition:enter="transition ease-out duration-300"
+                x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                class="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl pointer-events-auto overflow-hidden flex flex-col"
+            >
+                <div class="bg-navy-900 p-6 text-white relative flex justify-between items-center">
+                    <h2 class="text-lg font-bold tracking-tight">Sesuaikan Foto Profil</h2>
+                    <button 
+                        @click="showCropper = false; if(cropper) cropper.destroy(); cropper = null; document.getElementById('photo').value = '';"
+                        class="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
+                    >
+                        <x-lucide-x class="w-5 h-5" />
+                    </button>
+                </div>
+
+                <div class="p-6 bg-slate-50 flex justify-center">
+                    <div class="max-h-[60vh] max-w-full overflow-hidden rounded-2xl shadow-inner border border-slate-200 bg-white">
+                        <img id="cropper-image" src="" class="block max-w-full">
+                    </div>
+                </div>
+
+                <div class="p-6 pt-0 bg-slate-50 flex gap-3">
+                    <button 
+                        @click="showCropper = false; if(cropper) cropper.destroy(); cropper = null; document.getElementById('photo').value = '';"
+                        class="flex-1 px-4 py-3 rounded-2xl text-sm font-bold text-slate-500 border border-slate-200 hover:bg-slate-100 transition-all uppercase tracking-widest bg-white"
+                        :disabled="isUploading"
+                    >
+                        Batal
+                    </button>
+                    <button 
+                        @click="cropImage"
+                        class="flex-[1.5] bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-3 rounded-2xl font-black text-sm shadow-xl shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 uppercase tracking-widest disabled:opacity-50"
+                        :disabled="isUploading"
+                    >
+                        <span x-show="!isUploading">Crop & Simpan</span>
+                        <span x-show="isUploading" style="display: none;">Memproses...</span>
                     </button>
                 </div>
             </div>

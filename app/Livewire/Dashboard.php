@@ -14,10 +14,12 @@ class Dashboard extends Component
         $incomeThisMonth = $user->transactions()
             ->where('type', 'income')
             ->whereMonth('transaction_date', now()->month)
+            ->where('title', 'not like', 'Transfer dari %')
             ->sum('amount');
         $expenseThisMonth = $user->transactions()
             ->where('type', 'expense')
             ->whereMonth('transaction_date', now()->month)
+            ->where('title', 'not like', 'Transfer ke %')
             ->sum('amount');
         
         $recentTransactions = $user->transactions()

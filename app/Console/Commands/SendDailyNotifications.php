@@ -52,6 +52,18 @@ class SendDailyNotifications extends Command
                     ],
                     'read_at' => null,
                 ]);
+            } elseif ($daysUntilDue < 0) {
+                $bill->user->notifications()->create([
+                    'id' => (string) \Illuminate\Support\Str::uuid(),
+                    'type' => 'App\Notifications\BillReminderNotification',
+                    'data' => [
+                        'message' => 'Tagihan ' . $bill->title . ' telah melewati tanggal jatuh tempo (' . abs($daysUntilDue) . ' hari yang lalu)!',
+                        'bill_id' => $bill->id,
+                        'amount' => $bill->amount,
+                        'due_date' => $bill->due_date,
+                    ],
+                    'read_at' => null,
+                ]);
             }
         }
         

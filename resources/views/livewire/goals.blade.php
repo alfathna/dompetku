@@ -9,7 +9,7 @@
             <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Financial Goals</h1>
             <p class="text-slate-500 mt-1">Wujudkan impianmu dengan perencanaan matang.</p>
         </div>
-        <button wire:click="openAddModal" class="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-emerald-500/20 active:scale-95 transition-all flex items-center gap-2">
+        <button wire:click="$set('showAddModal', true)" class="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-2xl font-bold shadow-lg shadow-emerald-500/20 active:scale-95 transition-all flex items-center gap-2">
             Tambah Goals
         </button>
     </div>
@@ -23,7 +23,7 @@
                 <h3 class="text-2xl font-bold text-slate-900 mb-2">Belum ada Financial Goals</h3>
                 <p class="text-slate-500 max-w-md mx-auto">Mulai rencanakan impian besarmu hari ini. Baik itu membeli rumah, liburan, atau dana darurat, catat dan capai targetmu.</p>
                 
-                <button wire:click="openAddModal" class="mt-8 bg-navy-900 hover:bg-emerald-600 text-white px-8 py-3 rounded-2xl font-black text-sm transition-all uppercase tracking-widest shadow-lg shadow-navy-900/20 hover:shadow-emerald-500/30">
+                <button wire:click="$set('showAddModal', true)" class="mt-8 bg-navy-900 hover:bg-emerald-600 text-white px-8 py-3 rounded-2xl font-black text-sm transition-all uppercase tracking-widest shadow-lg shadow-navy-900/20 hover:shadow-emerald-500/30">
                     Mulai Rencana Pertamamu
                 </button>
             </div>
@@ -83,25 +83,17 @@
                     <div class="grid grid-cols-2 gap-4 border-t border-slate-100 pt-4">
                         <div>
                             <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Estimasi Selesai</p>
-                            @if($goal->monthly_capacity)
-                                <p class="text-xs font-bold text-navy-900 flex items-center gap-1 mt-1">
-                                    <x-lucide-calendar class="w-3.5 h-3.5 text-emerald-500" />
-                                    {{ \Carbon\Carbon::parse($goal->estimate_date)->translatedFormat('M Y') }}
-                                </p>
-                            @else
-                                <p class="text-xs text-slate-400 mt-1">&nbsp;</p>
-                            @endif
+                            <p class="text-xs font-bold text-navy-900 flex items-center gap-1 mt-1">
+                                <x-lucide-calendar class="w-3.5 h-3.5 text-emerald-500" />
+                                {{ \Carbon\Carbon::parse($goal->estimate_date)->translatedFormat('M Y') }}
+                            </p>
                         </div>
                         <div class="text-right">
                             <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Kapasitas Bulanan</p>
-                            @if($goal->monthly_capacity)
-                                <p class="text-xs font-bold text-blue-600 flex items-center justify-end gap-1 mt-1">
-                                    <x-lucide-trending-up class="w-3.5 h-3.5" />
-                                    Rp {{ number_format($goal->monthly_capacity, 0, ',', '.') }} / bln
-                                </p>
-                            @else
-                                <p class="text-xs text-slate-400 mt-1">&nbsp;</p>
-                            @endif
+                            <p class="text-xs font-bold text-blue-600 flex items-center justify-end gap-1 mt-1">
+                                <x-lucide-trending-up class="w-3.5 h-3.5" />
+                                Rp {{ number_format($goal->monthly_capacity, 0, ',', '.') }} / bln
+                            </p>
                         </div>
                     </div>
                     
@@ -186,12 +178,12 @@
 
                         <!-- Kapasitas Bulanan -->
                         <div class="space-y-1.5">
-                            <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-1">Kapasitas Bulanan (Opsional)</label>
+                            <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-1">Kapasitas Bulanan*</label>
                             <div class="relative group">
                                 <x-lucide-trending-up class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors w-4 h-4" />
                                 <span class="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-[10px]">/ BLN</span>
                                 <div x-data="{ raw: @entangle('goalMonthlyCapacity'), formatted: '' }" x-init="formatted = raw ? new Intl.NumberFormat('id-ID').format(raw) : ''; $watch('raw', val => { if(!val) formatted = ''; else if(val != String(formatted).replace(/\D/g, '')) formatted = new Intl.NumberFormat('id-ID').format(val); })">
-                                    <input type="text" x-model="formatted" @input="let val = String(formatted).replace(/\D/g, ''); raw = val ? parseInt(val) : null; formatted = val ? new Intl.NumberFormat('id-ID').format(val) : '';" placeholder="0" class="w-full bg-slate-50 border border-slate-100 rounded-2xl py-2.5 pl-10 pr-12 text-xs font-bold text-navy-900 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500/50 focus:bg-white outline-none transition-all" />
+                                    <input type="text" x-model="formatted" @input="let val = String(formatted).replace(/\D/g, ''); raw = val ? parseInt(val) : null; formatted = val ? new Intl.NumberFormat('id-ID').format(val) : '';" placeholder="0" class="w-full bg-slate-50 border border-slate-100 rounded-2xl py-2.5 pl-10 pr-12 text-xs font-bold text-navy-900 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500/50 focus:bg-white outline-none transition-all" required />
                                 </div>
                             </div>
                             @error('goalMonthlyCapacity') <span class="text-rose-500 text-[10px] ml-1">{{ $message }}</span> @enderror
@@ -200,15 +192,12 @@
 
                     <!-- Estimasi Selesai -->
                     <div class="space-y-1.5">
-                        <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-1">Estimasi Selesai</label>
+                        <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block ml-1">Estimasi Selesai*</label>
                         <div class="relative group">
                             <x-lucide-calendar class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors w-4 h-4" />
-                            <input type="text" wire:model="goalEstimateDate" readonly placeholder="Isi kapasitas bulanan untuk melihat estimasi" class="w-full bg-slate-50 border border-slate-100 rounded-2xl py-2.5 pl-10 pr-4 text-xs font-bold text-navy-900 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500/50 focus:bg-white outline-none transition-all" />
+                            <input type="date" wire:model="goalEstimateDate" class="w-full bg-slate-50 border border-slate-100 rounded-2xl py-2.5 pl-10 pr-4 text-xs font-bold text-navy-900 focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500/50 focus:bg-white outline-none transition-all" required />
                         </div>
                         @error('goalEstimateDate') <span class="text-rose-500 text-[10px] ml-1">{{ $message }}</span> @enderror
-                        @if(empty($goalMonthlyCapacity))
-                            <p class="text-xs text-slate-400 mt-1">Isi kapasitas bulanan untuk melihat estimasi</p>
-                        @endif
                     </div>
 
                     <div class="bg-emerald-50 p-4 rounded-2xl flex items-start gap-3 text-emerald-700">

@@ -88,7 +88,7 @@
             >
                 <div class="w-9 h-9 bg-emerald-100 rounded-full flex items-center justify-center border-2 border-white shadow-sm overflow-hidden">
                     <img 
-                        src="https://api.dicebear.com/7.x/avataaars/svg?seed={{ urlencode(auth()->user()->name ?? 'Avatar') }}" 
+                        src="{{ auth()->user()->profile_photo_url }}" 
                         alt="Avatar" 
                         class="w-full h-full object-cover"
                     />

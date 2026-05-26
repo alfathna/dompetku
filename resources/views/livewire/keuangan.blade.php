@@ -126,7 +126,7 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-3 w-full xl:w-auto justify-end">
-                    <button class="flex items-center justify-center gap-2 px-6 py-2.5 bg-white border border-slate-200 rounded-2xl text-slate-600 text-sm font-bold shadow-sm hover:bg-slate-50 transition-all">
+                    <button wire:click="exportTransactions" class="flex items-center justify-center gap-2 px-6 py-2.5 bg-white border border-slate-200 rounded-2xl text-slate-600 text-sm font-bold shadow-sm hover:bg-slate-50 transition-all">
                         <x-lucide-download class="w-[18px] h-[18px]" /> Export
                     </button>
                     <button wire:click="$set('showAddModal', true)" class="flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-500 text-white rounded-2xl text-sm font-bold shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all flex-1 xl:flex-none whitespace-nowrap">

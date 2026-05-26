@@ -19,12 +19,14 @@ class Statistik extends Component
             ->where('type', 'income')
             ->whereMonth('transaction_date', $now->month)
             ->whereYear('transaction_date', $now->year)
+            ->where('title', 'not like', 'Transfer dari %')
             ->sum('amount');
             
         $expenseThisMonth = $user->transactions()
             ->where('type', 'expense')
             ->whereMonth('transaction_date', $now->month)
             ->whereYear('transaction_date', $now->year)
+            ->where('title', 'not like', 'Transfer ke %')
             ->sum('amount');
 
         $lastMonth = $now->copy()->subMonth();
@@ -32,12 +34,14 @@ class Statistik extends Component
             ->where('type', 'income')
             ->whereMonth('transaction_date', $lastMonth->month)
             ->whereYear('transaction_date', $lastMonth->year)
+            ->where('title', 'not like', 'Transfer dari %')
             ->sum('amount');
 
         $expenseLastMonth = $user->transactions()
             ->where('type', 'expense')
             ->whereMonth('transaction_date', $lastMonth->month)
             ->whereYear('transaction_date', $lastMonth->year)
+            ->where('title', 'not like', 'Transfer ke %')
             ->sum('amount');
 
         // Hari Paling Boros (Day with highest expense this month)
@@ -45,6 +49,7 @@ class Statistik extends Component
             ->where('type', 'expense')
             ->whereMonth('transaction_date', $now->month)
             ->whereYear('transaction_date', $now->year)
+            ->where('title', 'not like', 'Transfer ke %')
             ->selectRaw('DATE(transaction_date) as date, SUM(amount) as total')
             ->groupBy('date')
             ->orderByDesc('total')
@@ -55,6 +60,7 @@ class Statistik extends Component
             ->where('type', 'expense')
             ->whereMonth('transaction_date', $now->month)
             ->whereYear('transaction_date', $now->year)
+            ->where('title', 'not like', 'Transfer ke %')
             ->selectRaw('category as name, SUM(amount) as value')
             ->groupBy('category')
             ->orderByDesc('value')
@@ -66,6 +72,7 @@ class Statistik extends Component
             ->whereIn('type', ['income', 'expense'])
             ->whereMonth('transaction_date', $now->month)
             ->whereYear('transaction_date', $now->year)
+            ->where('title', 'not like', 'Transfer %')
             ->selectRaw('DAY(transaction_date) as day, type, SUM(amount) as total')
             ->groupBy('day', 'type')
             ->get();
@@ -98,12 +105,14 @@ class Statistik extends Component
                 ->where('type', 'expense')
                 ->whereMonth('transaction_date', $m->month)
                 ->whereYear('transaction_date', $m->year)
+                ->where('title', 'not like', 'Transfer ke %')
                 ->sum('amount');
                 
             $inc = $user->transactions()
                 ->where('type', 'income')
                 ->whereMonth('transaction_date', $m->month)
                 ->whereYear('transaction_date', $m->year)
+                ->where('title', 'not like', 'Transfer dari %')
                 ->sum('amount');
                 
             $monthlyExpense[] = (float) $exp;

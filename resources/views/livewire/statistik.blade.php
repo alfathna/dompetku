@@ -1,4 +1,4 @@
-<div class="space-y-8 pb-12" x-data="{ chartRange: 'daily' }">
+<div class="space-y-8 pb-12">
     <!-- Header Content -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
@@ -67,7 +67,7 @@
     <div class="grid grid-cols-1 gap-6">
         
         <!-- Area Chart: Pemasukan vs Pengeluaran -->
-        <div class="w-full bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8 relative">
+        <div class="w-full bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-8 relative" x-data="areaChartData()" x-init="initChart()">
             @if($mostWastefulDay)
                 <div class="absolute top-8 right-8 text-right hidden md:block">
                     <p class="text-[10px] font-black text-rose-400 uppercase tracking-widest mb-1">Hari Paling Boros</p>
@@ -79,12 +79,12 @@
                 <h3 class="text-xl font-bold text-navy-900">Pemasukan vs Pengeluaran</h3>
                 
                 <div class="flex p-1 bg-slate-50 rounded-2xl border border-slate-100 w-fit">
-                    <button @click="chartRange = 'daily'; updateAreaChart()" :class="chartRange === 'daily' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'" class="px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all">Harian</button>
-                    <button @click="chartRange = 'monthly'; updateAreaChart()" :class="chartRange === 'monthly' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'" class="px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all">Bulanan</button>
+                    <button @click="setRange('daily')" :class="chartRange === 'daily' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'" class="px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all">Harian</button>
+                    <button @click="setRange('monthly')" :class="chartRange === 'monthly' ? 'bg-white text-navy-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'" class="px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all">Bulanan</button>
                 </div>
             </div>
 
-            <div class="h-[300px] w-full" x-data="areaChartData()" x-init="initChart()">
+            <div class="h-[300px] w-full">
                 <canvas id="areaChart"></canvas>
             </div>
         </div>
@@ -234,11 +234,22 @@
 
 <script>
     document.addEventListener('alpine:init', () => {
+        let currentAreaChart = null;
+        
         Alpine.data('areaChartData', () => ({
-            chartInstance: null,
+            chartRange: 'daily',
             dailyData: @json($dailyData),
             monthlyData: @json($monthlyData),
-            initChart() {
+            setRange(range) {
+                this.chartRange = range;
+                this.renderChart();
+            },
+            renderChart() {
+                if (currentAreaChart) {
+                    currentAreaChart.destroy();
+                }
+                
+                const dataObj = this.chartRange === 'daily' ? this.dailyData : this.monthlyData;
                 const ctx = document.getElementById('areaChart').getContext('2d');
                 
                 // Gradients
@@ -250,14 +261,14 @@
                 gradientExpense.addColorStop(0, 'rgba(239, 68, 68, 0.2)');
                 gradientExpense.addColorStop(1, 'rgba(239, 68, 68, 0)');
 
-                this.chartInstance = new Chart(ctx, {
+                currentAreaChart = new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: this.dailyData.labels,
+                        labels: dataObj.labels,
                         datasets: [
                             {
                                 label: 'Pemasukan',
-                                data: this.dailyData.income,
+                                data: dataObj.income,
                                 borderColor: '#10b981',
                                 backgroundColor: gradientIncome,
                                 borderWidth: 3,
@@ -268,7 +279,7 @@
                             },
                             {
                                 label: 'Pengeluaran',
-                                data: this.dailyData.expense,
+                                data: dataObj.expense,
                                 borderColor: '#ef4444',
                                 backgroundColor: gradientExpense,
                                 borderWidth: 3,
@@ -329,14 +340,9 @@
                         }
                     }
                 });
-
-                this.$parent.updateAreaChart = () => {
-                    const dataObj = this.$parent.chartRange === 'daily' ? this.dailyData : this.monthlyData;
-                    this.chartInstance.data.labels = dataObj.labels;
-                    this.chartInstance.data.datasets[0].data = dataObj.income;
-                    this.chartInstance.data.datasets[1].data = dataObj.expense;
-                    this.chartInstance.update();
-                }
+            },
+            initChart() {
+                this.renderChart();
             }
         }));
 

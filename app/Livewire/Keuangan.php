@@ -461,6 +461,19 @@ class Keuangan extends Component
         }
 
         $bill->update(['status' => 'Paid']);
+
+        if ($bill->is_recurring) {
+            auth()->user()->bills()->create([
+                'title' => $bill->title,
+                'amount' => $bill->amount,
+                'due_date' => \Carbon\Carbon::parse($bill->due_date)->addMonth()->format('Y-m-d'),
+                'icon' => $bill->icon,
+                'wallet_id' => $bill->wallet_id,
+                'has_reminder' => $bill->has_reminder,
+                'is_recurring' => $bill->is_recurring,
+            ]);
+        }
+
         $this->showPayConfirmModal = false;
     }
 
@@ -530,6 +543,18 @@ class Keuangan extends Component
 
             $bill->update(['status' => 'Paid']);
             
+            if ($bill->is_recurring) {
+                auth()->user()->bills()->create([
+                    'title' => $bill->title,
+                    'amount' => $bill->amount,
+                    'due_date' => \Carbon\Carbon::parse($bill->due_date)->addMonth()->format('Y-m-d'),
+                    'icon' => $bill->icon,
+                    'wallet_id' => $bill->wallet_id,
+                    'has_reminder' => $bill->has_reminder,
+                    'is_recurring' => $bill->is_recurring,
+                ]);
+            }
+
             $this->showPayConfirmModal = false;
             $this->payBillId = null;
         }
@@ -723,8 +748,50 @@ class Keuangan extends Component
                 
                 // Add flash or dispatch event for UI if needed
                 $this->dispatch('notifications-updated');
+            } elseif ($daysUntilDue < 0) {
+                // Send Database Notification
+                auth()->user()->notifications()->create([
+                    'id' => (string) \Illuminate\Support\Str::uuid(),
+                    'type' => 'App\Notifications\BillReminderNotification',
+                    'data' => [
+                        'message' => 'Tagihan ' . $bill->title . ' telah melewati tanggal jatuh tempo (' . abs($daysUntilDue) . ' hari yang lalu)!',
+                        'bill_id' => $bill->id,
+                        'amount' => $bill->amount,
+                        'due_date' => $bill->due_date,
+                    ],
+                    'read_at' => null,
+                ]);
+
+                $bill->update(['reminder_sent' => true]);
+                
+                // Add flash or dispatch event for UI if needed
+                $this->dispatch('notifications-updated');
             }
         }
+    }
+
+    public function exportTransactions()
+    {
+        $transactions = auth()->user()->transactions()->orderBy('transaction_date', 'desc')->get();
+        $csvFileName = 'transaksi_' . now()->format('Ymd_His') . '.csv';
+
+        return response()->streamDownload(function () use ($transactions) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Tanggal', 'Transaksi', 'Kategori', 'Tipe', 'Nominal', 'Wallet', 'Catatan']);
+
+            foreach ($transactions as $tx) {
+                fputcsv($file, [
+                    \Carbon\Carbon::parse($tx->transaction_date)->format('Y-m-d'),
+                    $tx->title,
+                    $tx->category ?? '-',
+                    $tx->type,
+                    $tx->amount,
+                    $tx->wallet ? $tx->wallet->name : '-',
+                    $tx->notes ?? ''
+                ]);
+            }
+            fclose($file);
+        }, $csvFileName);
     }
 
     public function deleteTransaction($id)
