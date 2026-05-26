@@ -29,24 +29,43 @@ class Goals extends Component
     {
         $this->validate([
             'goalName' => 'required|string|max:255',
-            'goalTargetAmount' => 'required|numeric',
-            'goalEstimateDate' => 'required|date',
-            'goalMonthlyCapacity' => 'required|numeric',
+            'goalTargetAmount' => 'required|numeric|min:1',
+            'goalEstimateDate' => 'nullable|date',
+            'goalMonthlyCapacity' => 'nullable|numeric|min:0',
         ]);
+
+        // Calculate estimate_date automatically if monthly capacity provided
+        $estimateDate = null;
+        $monthly = $this->goalMonthlyCapacity;
+        if ($monthly && $monthly > 0) {
+            // determine collected amount (existing goal) or 0
+            $collected = 0;
+            if ($this->goalId) {
+                $existing = auth()->user()->goals()->find($this->goalId);
+                $collected = $existing ? $existing->collected_amount : 0;
+            }
+
+            $remaining = max(0, $this->goalTargetAmount - $collected);
+            $months = max(1, (int) ceil($remaining / $monthly));
+            $estimateDate = now()->addMonths($months)->format('Y-m-d');
+        } else {
+            // allow manual date if provided, otherwise null
+            $estimateDate = $this->goalEstimateDate ?: null;
+        }
 
         if ($this->goalId) {
             $goal = auth()->user()->goals()->findOrFail($this->goalId);
             $goal->update([
                 'title' => $this->goalName,
                 'target_amount' => $this->goalTargetAmount,
-                'estimate_date' => $this->goalEstimateDate,
+                'estimate_date' => $estimateDate,
                 'monthly_capacity' => $this->goalMonthlyCapacity,
             ]);
         } else {
             auth()->user()->goals()->create([
                 'title' => $this->goalName,
                 'target_amount' => $this->goalTargetAmount,
-                'estimate_date' => $this->goalEstimateDate,
+                'estimate_date' => $estimateDate,
                 'monthly_capacity' => $this->goalMonthlyCapacity,
                 'color' => 'emerald',
                 'collected_amount' => 0,
@@ -54,6 +73,16 @@ class Goals extends Component
         }
 
         $this->reset(['goalId', 'goalName', 'goalTargetAmount', 'goalEstimateDate', 'goalMonthlyCapacity', 'showAddModal']);
+    }
+
+    public function openAddModal()
+    {
+        $this->goalId = null;
+        $this->goalName = null;
+        $this->goalTargetAmount = null;
+        $this->goalEstimateDate = null;
+        $this->goalMonthlyCapacity = null;
+        $this->showAddModal = true;
     }
 
     public function editGoal($id)
