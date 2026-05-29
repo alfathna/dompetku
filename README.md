@@ -87,7 +87,6 @@ Ikuti langkah-langkah di bawah ini untuk menjalankan proyek ini di mesin lokal A
    ```bash
    php artisan serve
    ```
-   Aplikasi Anda kini dapat diakses di `http://localhost:8000` (Atau bisa langsung diakses melalui `http://dompetku.test` jika menggunakan **Laragon**).
 
 ## 🗂️ Struktur Direktori Penting
 - `app/Livewire/`: Lokasi *Class* komponen Livewire (Controller).
